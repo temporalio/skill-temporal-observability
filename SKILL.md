@@ -8,7 +8,57 @@ version: 0.1.0
 
 ## Overview
 
-Expert guidance for Temporal metrics collection, monitoring, and observability. Helps platform engineers and SREs instrument, collect, query, and alert on Temporal metrics across Temporal Cloud (OpenMetrics endpoint), self-hosted deployments (Prometheus + Grafana), and SDK-emitted metrics, with integrations for Datadog, Grafana Cloud, ClickStack, New Relic, and OpenTelemetry Collector.
+This skill helps users set up metrics collection, write monitoring queries, configure alerts, and diagnose performance issues using Temporal metrics. It operates in three modes:
+
+- **Setup** — generating scrape configs, integration configs, and SDK metrics endpoint code.
+- **Query** — writing PromQL/DQL queries for dashboards and alerts.
+- **Diagnosis** — recommending which metrics to check for a given symptom and what the values mean.
+
+You produce configs, queries, and code snippets. You do not have access to live metric data, dashboards, or alerting systems. When the user describes symptoms, provide the diagnostic queries and explain what to look for in the results. This skill owns the metrics collection and query layer. When the user needs to act on metric signals (scale workers, change tuning parameters, rotate credentials, administer namespaces), hand off to the appropriate sibling skill and provide the metric evidence gathered so far.
+
+## How to Use This Skill
+
+### Step 1: Determine the metric source
+
+Before answering any metrics question, establish which of the three sources the user is asking about. This determines which reference files apply, which query functions are valid, and which auth/scrape patterns to use:
+
+- **Cloud metrics** (`temporal_cloud_v1_*`) — from `metrics.temporal.io`, API key auth. Never use `rate()`.
+- **SDK metrics** (`temporal_*` without `cloud`) — emitted by Workers/Clients, scraped from app endpoints. `rate()` is correct here.
+- **Self-hosted cluster metrics** (`service_requests`, `persistence_latency`, etc.) — emitted by the Temporal Service itself. `rate()` is correct here.
+
+If the source is ambiguous, ask before writing queries.
+
+### Step 2: Determine the deployment context
+
+Cloud, self-hosted, or dev server. This affects scrape configs, auth mechanisms, and which metrics are available.
+
+### Step 3: Determine the observability platform
+
+Prometheus, Datadog, Grafana Cloud, New Relic, ClickStack, or OTel Collector. This affects config format, query language, and available features.
+
+### Step 4: For SDK metrics, determine the SDK language
+
+Histogram units differ: milliseconds for Core-based SDKs (TypeScript, Python, .NET) vs seconds for Go and Java. Getting this wrong produces thresholds that are off by 1000x.
+
+### Multi-file routing for common questions
+
+Most real questions require 2-3 reference files:
+
+- **"Set up monitoring for my Temporal Cloud namespace"** → `openmetrics-endpoint.md` (auth + scrape) + `integrations.md` (platform config) + `service-health-monitoring.md` (what to alert on) + `worker-health-monitoring.md` (worker fleet).
+- **"My workers seem slow / tasks are backing up"** → `worker-health-monitoring.md` (backlog, sync match, poll success queries) + `troubleshooting.md` (diagnostic steps). If they need to act: hand off to `skill-temporal-workertuning`.
+- **"Migrate from v0 to v1"** → `migration-v0-to-v1.md` (mapping table + auth changes). Note the October 2026 v0 deprecation deadline.
+- **"What metrics should I watch?"** → `service-health-monitoring.md` + `worker-health-monitoring.md` for the essential observation set.
+
+## Key Facts
+
+- OpenMetrics endpoint: `metrics.temporal.io`, API key auth, 30s recommended scrape interval, 30k datapoints per scrape, 180 requests/hour rate limit, ~3-minute data latency.
+- PromQL/v0 endpoint deprecated — sunset date October 5, 2026.
+- v1 metrics are pre-computed per-second rates with delta temporality. Never apply `rate()`, `increase()`, `irate()`, or `histogram_quantile()`.
+- SDK histogram units: milliseconds (TypeScript, Python, .NET) vs seconds (Go, Java).
+- v1 pre-calculated percentiles (p50, p95, p99) cannot be accurately aggregated across dimensions.
+- `temporal_cloud_v1_approximate_backlog_count` is approximate — can overcount and resets to zero on idle queues.
+- Self-hosted Frontend Service health checks: port 7233, not 8080.
+- `worker_version` label is deprecated — use `temporal_worker_deployment_name` and `temporal_worker_build_id`.
 
 ## Intent Decision Table
 
@@ -31,35 +81,9 @@ Expert guidance for Temporal metrics collection, monitoring, and observability. 
 ## Critical Rules
 
 ### v0 vs v1 Metric Names
-- The deprecated PromQL endpoint uses `temporal_cloud_v0_*` metrics. The OpenMetrics endpoint uses `temporal_cloud_v1_*` metrics. Never substitute one for the other. The naming patterns differ beyond the version prefix (e.g., `temporal_cloud_v0_frontend_service_request_count` became `temporal_cloud_v1_service_request_count` -- note the dropped `frontend_`).
-
-### No `rate()` on v1 Metrics
-- v1 metrics are pre-computed per-second rates with delta temporality. Do NOT apply `rate()`, `increase()`, `irate()`, or `histogram_quantile()` to them. Use `sum()`, `avg()`, `max()`, `min()` and similar aggregation functions directly.
-- `rate()` IS correct for SDK metrics (e.g., `temporal_workflow_task_schedule_to_start_latency`) and self-hosted cluster metrics (e.g., `service_requests`), which are cumulative counters/histograms.
-
-### Three Distinct Metric Sources
-- **Cloud metrics** (`temporal_cloud_v1_*`): From the OpenMetrics endpoint at `metrics.temporal.io`, using API key auth.
-- **SDK metrics** (`temporal_*` without `cloud`): Emitted by Workers and Clients, scraped from application-configured endpoints.
-- **Self-hosted cluster metrics** (e.g., `service_requests`, `persistence_latency`): Emitted by the Temporal Service itself, different naming convention.
-Never confuse these three sources.
+- v0 and v1 names differ beyond the version prefix (e.g., `temporal_cloud_v0_frontend_service_request_count` → `temporal_cloud_v1_service_request_count` — note the dropped `frontend_`). Never substitute one for the other.
 
 ### Authentication
-- OpenMetrics endpoint: API key (Bearer token) authentication with a service account having "Metrics Read-Only" Account Level Role.
+- OpenMetrics endpoint: API key (Bearer token) with a service account having "Metrics Read-Only" Account Level Role.
 - PromQL endpoint (deprecated): mTLS certificates with customer-specific endpoints (`<account-id>.tmprl.cloud/prometheus`).
-Never mix these authentication methods or endpoint URLs.
-
-### Approximate Backlog Count
-- `temporal_cloud_v1_approximate_backlog_count` is approximate. It can overcount (invalid/expired tasks) and reset to zero on idle task queues. Never describe it as exact.
-
-### SDK Metric Unit Differences
-- Core-based SDKs (TypeScript, Python, .NET): Histogram metrics default to milliseconds.
-- Java and Go SDKs: Histogram metrics default to seconds.
-
-### Percentile Metrics
-- v1 provides pre-calculated percentiles (p50, p95, p99). These cannot be accurately aggregated across dimensions. Do not use `histogram_quantile()` on v1 metrics.
-
-### Deprecated Labels
-- `worker_version` is deprecated. Use `temporal_worker_deployment_name` and `temporal_worker_build_id` instead.
-
-### Self-Hosted Health Checks
-- Frontend Service health checks (TCP or gRPC) are on port 7233, not 8080 or any other port.
+- Never mix these authentication methods or endpoint URLs.
