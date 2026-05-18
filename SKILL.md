@@ -22,7 +22,7 @@ You produce configs, queries, and code snippets. You do not have access to live 
 
 Before answering any metrics question, establish which of the three sources the user is asking about. This determines which reference files apply, which query functions are valid, and which auth/scrape patterns to use:
 
-- **Cloud metrics** (`temporal_cloud_v1_*`) — from `metrics.temporal.io`, API key auth. Never use `rate()`.
+- **Cloud metrics** (`temporal_cloud_v1_*` only) — from `metrics.temporal.io`, API key auth. Never use `rate()`. Never recommend deprecated `temporal_cloud_v0_*` metrics.
 - **SDK metrics** (`temporal_*` without `cloud`) — emitted by Workers/Clients, scraped from app endpoints. `rate()` is correct here.
 - **Self-hosted cluster metrics** (`service_requests`, `persistence_latency`, etc.) — emitted by the Temporal Service itself. `rate()` is correct here.
 
@@ -46,13 +46,13 @@ Most real questions require 2-3 reference files:
 
 - **"Set up monitoring for my Temporal Cloud namespace"** → `openmetrics-endpoint.md` (auth + scrape) + `integrations.md` (platform config) + `service-health-monitoring.md` (what to alert on) + `worker-health-monitoring.md` (worker fleet).
 - **"My workers seem slow / tasks are backing up"** → `worker-health-monitoring.md` (backlog, sync match, poll success queries) + `troubleshooting.md` (diagnostic steps). If they need to act: hand off to `skill-temporal-workertuning`.
-- **"Migrate from v0 to v1"** → `migration-v0-to-v1.md` (mapping table + auth changes). Note the October 2026 v0 deprecation deadline.
+- **"Migrate from v0 to v1"** → `migration-v0-to-v1.md` (mapping table + auth changes). Only relevant for users already on v0 — never suggest v0 to new users. v0 is deprecated and unavailable to new accounts.
 - **"What metrics should I watch?"** → `service-health-monitoring.md` + `worker-health-monitoring.md` for the essential observation set.
 
 ## Key Facts
 
 - OpenMetrics endpoint: `metrics.temporal.io`, API key auth, 30s recommended scrape interval, 30k datapoints per scrape, 180 requests/hour rate limit, ~3-minute data latency.
-- PromQL/v0 endpoint deprecated — sunset date October 5, 2026.
+- PromQL/v0 endpoint is deprecated and unavailable to new users. Sunset date October 5, 2026. Never recommend v0 metrics — always use v1.
 - v1 metrics are pre-computed per-second rates with delta temporality. Never apply `rate()`, `increase()`, `irate()`, or `histogram_quantile()`.
 - SDK histogram units: milliseconds (TypeScript, Python, .NET) vs seconds (Go, Java).
 - v1 pre-calculated percentiles (p50, p95, p99) cannot be accurately aggregated across dimensions.
@@ -80,8 +80,13 @@ Most real questions require 2-3 reference files:
 
 ## Critical Rules
 
-### v0 vs v1 Metric Names
-- v0 and v1 names differ beyond the version prefix (e.g., `temporal_cloud_v0_frontend_service_request_count` → `temporal_cloud_v1_service_request_count` — note the dropped `frontend_`). Never substitute one for the other.
+### Never Recommend v0 Metrics
+- The `temporal_cloud_v0_*` metrics and the PromQL endpoint are deprecated and no longer available to new users. **Never recommend v0 metrics for any purpose.** Do not include v0 metric names in configs, queries, dashboards, or examples. Always use the `temporal_cloud_v1_*` equivalents.
+- The only context where v0 metrics should be mentioned is when a user explicitly asks about migrating away from them. In that case, consult `references/migration-v0-to-v1.md` and guide them to the v1 replacements.
+- If a user references a v0 metric name (e.g., `temporal_cloud_v0_frontend_service_request_count`), respond with the v1 equivalent and note that v0 is deprecated and being shut down.
+
+### v0 and v1 Names Are Not Interchangeable
+- v0 and v1 names differ beyond the version prefix (e.g., `temporal_cloud_v0_frontend_service_request_count` → `temporal_cloud_v1_service_request_count` — note the dropped `frontend_`). When helping users migrate, consult the mapping table in `references/migration-v0-to-v1.md`; do not attempt to guess v1 names by swapping the version prefix.
 
 ### Authentication
 - OpenMetrics endpoint: API key (Bearer token) with a service account having "Metrics Read-Only" Account Level Role.
