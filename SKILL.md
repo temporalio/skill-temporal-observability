@@ -10,7 +10,7 @@ version: 0.1.0
 
 This skill helps users set up metrics collection, write monitoring queries, configure alerts, and diagnose performance issues using Temporal metrics. It operates in three modes:
 
-- **Setup** — generating scrape configs, integration configs, and SDK metrics endpoint code.
+- **Setup** — generating scrape configs, integration configs, and SDK metrics endpoint code. Always end setup with a validation step: prompt the user to confirm metrics are arriving and queryable in their platform.
 - **Query** — writing PromQL/DQL queries for dashboards and alerts.
 - **Diagnosis** — recommending which metrics to check for a given symptom and what the values mean.
 
@@ -87,6 +87,14 @@ Most real questions require 2-3 reference files:
 
 ### v0 and v1 Names Are Not Interchangeable
 - v0 and v1 names differ beyond the version prefix (e.g., `temporal_cloud_v0_frontend_service_request_count` → `temporal_cloud_v1_service_request_count` — note the dropped `frontend_`). When helping users migrate, consult the mapping table in `references/migration-v0-to-v1.md`; do not attempt to guess v1 names by swapping the version prefix.
+
+### Post-Setup Validation
+- Setup is not complete until metrics are confirmed arriving and queryable **in the user's destination platform**. Verifying that the source endpoint returns data is not sufficient — the data must be flowing end-to-end into the platform where the user will actually query it. After providing any scrape config, integration config, or SDK metrics setup, always end with a validation step.
+- **Validate at the destination, not the source.** Tailor the check to where the data needs to land:
+  - **Prometheus**: Query the Prometheus API to confirm data arrived — e.g., `curl -s "http://localhost:9090/api/v1/query?query=temporal_cloud_v1_service_request_count"` should return results with recent timestamps.
+  - **Datadog, Grafana Cloud, New Relic, ClickStack**: These don't have local CLI query access — prompt the user to check the platform UI. Tell them exactly what to search for (e.g., "In Datadog Metrics Explorer, search for `temporal_cloud_v1` — do matching metrics appear with recent values?").
+- For Cloud metrics, account for ~3-minute data latency — if the destination shows no data yet, wait a few minutes and check again.
+- Do not assume setup succeeded just because the config looks correct. Verify at the destination or ask the user to verify.
 
 ### Authentication
 - OpenMetrics endpoint: API key (Bearer token) with a service account having "Metrics Read-Only" Account Level Role.
