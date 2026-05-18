@@ -12,7 +12,7 @@ This skill helps users set up metrics collection, write monitoring queries, conf
 
 - **Setup** — generating scrape configs, integration configs, and SDK metrics endpoint code. Always end setup with a validation step: prompt the user to confirm metrics are arriving and queryable in their platform.
 - **Query** — writing PromQL/DQL queries for dashboards and alerts.
-- **Diagnosis** — recommending which metrics to check for a given symptom and what the values mean.
+- **Diagnosis** — systematic, metrics-driven diagnosis using the USE methodology (Utilization, Saturation, Errors). Follow the Diagnosis Protocol below.
 
 You produce configs, queries, and code snippets. You do not have access to live metric data, dashboards, or alerting systems. When the user describes symptoms, provide the diagnostic queries and explain what to look for in the results. This skill owns the metrics collection and query layer. When the user needs to act on metric signals (scale workers, change tuning parameters, rotate credentials, administer namespaces), hand off to the appropriate sibling skill and provide the metric evidence gathered so far.
 
@@ -45,9 +45,107 @@ Histogram units differ: milliseconds for Core-based SDKs (TypeScript, Python, .N
 Most real questions require 2-3 reference files:
 
 - **"Set up monitoring for my Temporal Cloud namespace"** → `openmetrics-endpoint.md` (auth + scrape) + `integrations.md` (platform config) + `service-health-monitoring.md` (what to alert on) + `worker-health-monitoring.md` (worker fleet).
-- **"My workers seem slow / tasks are backing up"** → `worker-health-monitoring.md` (backlog, sync match, poll success queries) + `troubleshooting.md` (diagnostic steps). If they need to act: hand off to `skill-temporal-workertuning`.
+- **"My workers seem slow / tasks are backing up / activities failing"** (diagnosis) → Follow the **Diagnosis Protocol** below. Consult `ops-diagnostics-reference.md` (USE framework, decision trees, metric mappings) + `worker-health-monitoring.md` (thresholds, queries) + `service-health-monitoring.md` (failure rates, limits) + `troubleshooting.md` (per-bottleneck root causes). For worked examples: `diagnosis-examples.md`. If they need to act on findings: hand off to `skill-temporal-workertuning`.
 - **"Migrate from v0 to v1"** → `migration-v0-to-v1.md` (mapping table + auth changes). Only relevant for users already on v0 — never suggest v0 to new users. v0 is deprecated and unavailable to new accounts.
 - **"What metrics should I watch?"** → `service-health-monitoring.md` + `worker-health-monitoring.md` for the essential observation set.
+
+## Diagnosis Protocol (USE Methodology)
+
+When the user describes a symptom (slow workflows, growing backlog, activity failures, high latency), follow this systematic process. Never diagnose without metrics data.
+
+### Step D1: Classify the Symptom
+
+Map the user's description to a category:
+
+| User says... | Category |
+|---|---|
+| "workflows slow to start", "backlog growing", "schedule-to-start high", "tasks queuing up" | **Throughput/Backlog** |
+| "activities failing", "workflow failures spiking", "retries not working", "error rate high" | **Failure/Error** |
+| "workflows taking too long end-to-end", "execution slow", "replay latency" | **Latency** |
+| "resource exhausted errors", "throttling", "hitting limits" | **Resource Pressure** |
+| "can't connect", "auth error", "certificate expired" | **Not this skill** — hand off to `skill-temporal-cloud` |
+| "need to tune workers", "autoscaling", "slot sizing" | **Not this skill** — hand off to `skill-temporal-workertuning` |
+
+If the symptom doesn't clearly map, ask what behavior they're seeing, when it started, and what changed.
+
+### Step D2: Detect the Environment
+
+Use context clues to determine:
+- **Deployment**: Cloud, self-hosted, or dev server
+- **SDK language**: Go, Java, TypeScript, Python, .NET (affects metric units)
+- **Observability platform**: Prometheus, Datadog, Grafana Cloud, New Relic, etc.
+
+See `references/ops-diagnostics-reference.md` § Environment Detection for clue table. If confidence is below 95%, ask.
+
+### Step D3: Establish Metrics Access
+
+You do not have access to live metrics. Establish how to get values:
+
+1. **MCP tool** — if the user has a Datadog or Grafana MCP server connected, use it to query metrics directly.
+2. **Screenshots** — ask the user to capture specific dashboard panels. Tell them which panels based on the symptom category:
+   - Throughput/Backlog: schedule-to-start latency, backlog count, task slots available, sync match rate
+   - Failure/Error: activity failure count (by type if possible), workflow failure count, activity execution latency
+   - Include the time axis and legend in screenshots
+3. **Manual values** — provide the exact query for their platform and ask them to run it and report values.
+
+Always provide queries in the user's platform syntax. See `references/ops-diagnostics-reference.md` § Query Examples by Platform for Datadog and New Relic translations. For PromQL, see `references/worker-health-monitoring.md` and `references/service-health-monitoring.md`.
+
+**Do not proceed with diagnosis without metrics data.**
+
+### Step D4: Run USE Diagnostic
+
+For each Temporal resource relevant to the symptom, check all three USE dimensions:
+
+- **Utilization**: How busy is the resource? (slots used, poll success rate, action count vs limit)
+- **Saturation**: Is work queuing up? (backlog count, schedule-to-start latency, cache evictions)
+- **Errors**: Is work failing? (activity_fail_count, workflow_failed_count, resource_exhausted)
+
+Consult `references/ops-diagnostics-reference.md`:
+- § USE Resource Inventory — maps Temporal resources to their U/S/E metrics
+- § Metric Name Mapping — which metric name to use for Cloud vs SDK
+- § Decision Trees — follow the appropriate scenario tree based on symptom category
+
+Cross-reference thresholds and detailed metric descriptions from:
+- `references/worker-health-monitoring.md` — backlog, sync match, poll success, task slots, sticky cache
+- `references/service-health-monitoring.md` — failure rates, error rates, limits, replication
+- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps
+
+### Step D5: Explain Then Prescribe
+
+Structure every diagnosis response using this format:
+
+**What's Happening**: Plain-language explanation of the mechanics. Connect the user's metrics to the behavior they're seeing. Explain how Temporal's internals work in this situation so the user builds a mental model.
+
+**USE Analysis**:
+
+| Resource | Utilization | Saturation | Errors |
+|---|---|---|---|
+| (resource) | (metric: value + interpretation) | (metric: value) | (metric: value) |
+
+**Why**: Root cause grounded in metric evidence. Explain the causal chain ("X is high because Y, caused by Z"). If multiple factors interact, show how.
+
+**Fix**: Ordered list, most impactful first. For each action, explain **why it helps** in one sentence.
+- Worker tuning → hand off to `skill-temporal-workertuning`
+- Infrastructure changes → hand off to `skill-temporal-ops`
+- Code changes → hand off to `skill-temporal-developer`
+
+**Monitor After**: Which metrics to watch, target values, and expected timeline for improvement.
+
+**If Not Resolved**: What persistence of the issue would indicate, and next diagnostic step or skill handoff.
+
+For fully worked examples of this protocol in action, see `references/diagnosis-examples.md`.
+
+### Diagnosis Common Pitfalls
+
+| Pitfall | Correct Behavior |
+|---|---|
+| Applying `rate()` to `temporal_cloud_v1_*` metrics in queries | v1 metrics are pre-computed rates — use directly. `rate()` is only valid for SDK and self-hosted metrics. |
+| Confusing SDK metric units across SDKs | Go/Java use seconds, TypeScript/Python/.NET use milliseconds. A 200ms threshold is `0.2` in Go/Java and `200` in Core SDKs. |
+| Assuming `approximate_backlog_count = 0` means no backlog | This metric resets to zero on idle queues. Confirm with schedule-to-start latency. |
+| Jumping to "add more workers" without checking slots | First check if existing workers have available slots. Slot depletion with low host CPU = configuration issue, not capacity. |
+| Diagnosing without knowing the environment | Cloud vs self-hosted changes which metrics exist. Always establish environment first. |
+| Ignoring the failure conversion rate | High activity failures with low workflow failures = healthy error handling. Always compute the ratio in failure scenarios. |
+| Prescribing without explaining | Users who understand the mechanics make better decisions. Explain before recommending. |
 
 ## Key Facts
 
@@ -73,6 +171,8 @@ Most real questions require 2-3 reference files:
 | Needs to monitor Worker fleet health (backlog, greedy workers, misconfigured workers, sticky cache) | Consult `references/worker-health-monitoring.md` |
 | Migrating from PromQL/v0 to OpenMetrics/v1 | Consult `references/migration-v0-to-v1.md` |
 | Troubleshooting performance bottlenecks using metrics | Consult `references/troubleshooting.md` |
+| Describing a symptom that needs systematic diagnosis (slow workflows, backlog, failures, latency) | Follow the **Diagnosis Protocol** above. Consult `references/ops-diagnostics-reference.md` for USE framework and decision trees |
+| Wants a worked example of a diagnostic workflow | Consult `references/diagnosis-examples.md` |
 | Wants to write Workflow/Activity/Worker SDK code (not metrics config) | Defer to `skill-temporal-developer` |
 | Wants to tune Worker performance (slot suppliers, tuners, cache sizing) | Defer to `skill-temporal-workertuning` -- this skill owns collection/query layer only |
 | Wants to administer or diagnose Temporal Cloud/self-hosted environments | Defer to `skill-temporal-ops` -- this skill provides metric queries for diagnosis |
