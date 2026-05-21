@@ -8,9 +8,21 @@ A skill for coding agents to use when instrumenting, collecting, querying, and a
 
 ## Installation
 
-1. `mkdir -p ~/.claude/skills && git clone https://github.com/temporalio/skill-temporal-observability ~/.claude/skills/temporal-observability`
+### Via manual clone (user-level)
 
-Appropriately adjust the installation directory based on your coding agent.
+Cloning into `~/.claude/skills/` makes the skill available across all sessions and projects for your user.
+
+```bash
+mkdir -p ~/.claude/skills && git clone https://github.com/temporalio/skill-temporal-observability ~/.claude/skills/temporal-observability
+```
+
+### Via CLI flag (per-session)
+
+```bash
+claude --plugin-dir /path/to/skill-temporal-observability
+```
+
+This loads the skill for a single session without permanently installing it.
 
 ## Supported Integrations
 
