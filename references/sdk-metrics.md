@@ -41,7 +41,7 @@ Working samples: <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:59-63 -->
 - [Python SDK Samples](https://github.com/temporalio/samples-python/tree/main/custom_metric)
 - [.NET SDK Samples](https://github.com/temporalio/samples-dotnet/tree/main/src/OpenTelemetry/DotNetMetrics)
 
-Some SDKs use OpenTelemetry to instrument metrics. A Prometheus exporter with OpenTelemetry can be used to expose metrics for scraping. <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:65-66 -->
+Some SDKs use OpenTelemetry to instrument metrics. A Prometheus exporter with OpenTelemetry can be used to expose metrics for scraping. <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:65-66 --> For the Go/Python/Java OpenTelemetry plugins and replay-safe providers, see `otel-plugins.md`.
 
 ## Prometheus Configuration for SDK Scrape
 <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:68-91 -->

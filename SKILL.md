@@ -163,6 +163,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | User intent | Action |
 |---|---|
 | Wants to know which Cloud metrics exist, their types, or labels | Consult `references/cloud-metrics-catalog.md` for the complete `temporal_cloud_v1_*` catalog |
+| Wants OpenTelemetry tracing or OTel-exported SDK metrics (Go/Python/Java plugin, replay-safe providers, Cloud Run) | Consult `references/otel-plugins.md` |
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
 | Wants to integrate metrics with Datadog, Grafana Cloud, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
 | Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
