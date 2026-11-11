@@ -109,7 +109,7 @@ Consult `references/ops-diagnostics-reference.md`:
 Cross-reference thresholds and detailed metric descriptions from:
 - `references/worker-health-monitoring.md` — backlog, sync match, poll success, task slots, sticky cache
 - `references/service-health-monitoring.md` — failure rates, error rates, limits, replication lag, detecting a failover or regional outage
-- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps
+- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps; worker log signals (`[TMPRL1104]`, Core log format, autoscaling poll-error warnings, Python log forwarding lifetime)
 
 ### Step D5: Explain Then Prescribe
 
