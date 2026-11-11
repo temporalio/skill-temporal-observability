@@ -4,6 +4,13 @@
 
 This reference covers the Temporal Cloud OpenMetrics endpoint: authentication, API endpoints, query parameters, rate limits, data latency, scrape best practices, and high-cardinality management.
 
+## Quick Answers
+
+- **Multiple values for `namespaces` or `metrics`:** repeat the key once per value, e.g. `/v1/metrics?namespaces=prod-payments&namespaces=prod-orders&metrics=temporal_cloud_v1_workflow_success_count&metrics=temporal_cloud_v1_approximate_backlog_count`.
+- **Scrape account role:** a Service Account with the account-level **Metrics Read-Only** role. It grants read access to the endpoint and nothing else; only an Account Owner or Global Admin can grant it or manage the account's API keys.
+- **Worker labels:** opt in with `labels=temporal_worker_deployment_name` and `labels=temporal_worker_build_id` (repeated `labels` keys).
+- **Integration setup (Datadog, Elastic, Grafana Cloud, SigNoz, Parseable, ...):** see `integrations.md`.
+
 ## Overview
 <!-- docs/cloud/metrics/openmetrics/index.mdx:41 -->
 
@@ -58,6 +65,8 @@ To account for metric data latency, the endpoint returns metrics from the curren
 |---|---|---|
 | `namespaces` | string array | Filter to specific Namespaces. Supports wildcards (e.g., `production-*`) |
 | `metrics` | string array | Filter to specific metrics |
+
+Array parameters use repeated keys (one `namespaces=` or `metrics=` per value).
 
 Opt-in labels are enabled via an additional `labels` query parameter (see cloud-metrics-catalog.md for details on available opt-in labels).
 

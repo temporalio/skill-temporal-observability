@@ -46,6 +46,7 @@ Most real questions require 2-3 reference files:
 
 - **"Set up monitoring for my Temporal Cloud namespace"** → `openmetrics-endpoint.md` (auth + scrape) + `integrations.md` (platform config) + `service-health-monitoring.md` (what to alert on) + `worker-health-monitoring.md` (worker fleet).
 - **"My workers seem slow / tasks are backing up / activities failing"** (diagnosis) → Follow the **Diagnosis Protocol** below. Consult `ops-diagnostics-reference.md` (USE framework, decision trees, metric mappings) + `worker-health-monitoring.md` (thresholds, queries) + `service-health-monitoring.md` (failure rates, limits) + `troubleshooting.md` (per-bottleneck root causes). For worked examples: `diagnosis-examples.md`. If they need to act on findings: hand off to `skill-temporal-workertuning`.
+- **"Scrape/filter the endpoint, repeated query params, scrape role, Elastic/SigNoz/Parseable/Grafana tile"** → `openmetrics-endpoint.md` § Quick Answers + `integrations.md`.
 - **"Migrate from v0 to v1"** → `migration-v0-to-v1.md` (mapping table + auth changes). Only relevant for users already on v0 — never suggest v0 to new users. v0 is deprecated and unavailable to new accounts.
 - **"What metrics should I watch?"** → `service-health-monitoring.md` + `worker-health-monitoring.md` for the essential observation set.
 
@@ -164,7 +165,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 |---|---|
 | Wants to know which Cloud metrics exist, their types, or labels | Consult `references/cloud-metrics-catalog.md` for the complete `temporal_cloud_v1_*` catalog |
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
-| Wants to integrate metrics with Datadog, Grafana Cloud, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
+| Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
 | Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
 | Setting up monitoring for a self-hosted Temporal Service | Consult `references/self-hosted-monitoring.md` |
 | Wants to monitor Temporal Cloud service health (latency, error rates, failures, limits) | Consult `references/service-health-monitoring.md` |
