@@ -43,6 +43,36 @@ Working samples: <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:59-63 -->
 
 Some SDKs use OpenTelemetry to instrument metrics. A Prometheus exporter with OpenTelemetry can be used to expose metrics for scraping. <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:65-66 -->
 
+## OpenTelemetry Export Options
+
+Read this when SDK metrics go to an OTLP collector or through the app's own OpenTelemetry pipeline instead of a Prometheus scrape endpoint.
+
+**Python**
+- `OpenTelemetryConfig` (set as `TelemetryConfig(metrics=...)` on the `Runtime`) sends metrics to an OTLP collector. Its `http=True` option uses HTTP/protobuf instead of gRPC, and `durations_as_seconds=True` exports durations as float seconds instead of integer milliseconds.
+- `histogram_bucket_overrides` (on `OpenTelemetryConfig` and `PrometheusConfig`) maps a metric name to a list of bucket boundaries. On `OpenTelemetryConfig` it shipped in `temporalio` 1.31.0; `PrometheusConfig` had it earlier.
+- To use your own OpenTelemetry `MeterProvider` (views, resources, any exporter), attach a `MetricBuffer` to the `Runtime` and run `temporalio.contrib.opentelemetry.MetricsExporter(buffer, meter_provider)` for as long as metrics should be exported. It is marked experimental and shipped in `temporalio` 1.33.0.
+- `MetricsExporter` drains the buffer every `poll_interval` (default 1 second); buffer updates are dropped if it is not drained regularly.
+
+```python
+buffer = MetricBuffer(10_000)
+runtime = Runtime(telemetry=TelemetryConfig(metrics=buffer))
+async with MetricsExporter(buffer, meter_provider):
+    client = await Client.connect("localhost:7233", runtime=runtime)
+```
+
+**Go**
+- `contrib/opentelemetry` `NewMetricsHandler(MetricsHandlerOptions{...})` backs the SDK's `MetricsHandler` with an OpenTelemetry `Meter`. By default, counters are OpenTelemetry `Int64UpDownCounter`s.
+- Set `UseMonotonicCounters: true` so counters use `Int64Counter` and exporters can classify them as monotonic sums. It defaults to `false`.
+- `WithCustomMetricsHandler` is a Temporal Server option on `temporal.NewServer` (embedded server), not a Go SDK client option. SDK clients set `client.Options.MetricsHandler`, for example from `contrib/opentelemetry` or `contrib/tally`.
+
+**.NET**
+- Set `OpenTelemetryOptions.HistogramAggregation` to `new OpenTelemetryHistogramAggregation.Base2Exponential()` for OpenTelemetry exponential histograms; the default is `ExplicitBuckets`. Shipped in the .NET SDK 1.21.0.
+- It applies to every histogram, including custom ones, and cannot be combined with `HistogramBucketOverrides` (the SDK throws an `ArgumentException`).
+- Every histogram name gets the `NameSuffix` (default `_native`), so the exponential series never shares a name with the fixed-bucket one. `MaxSize` defaults to 160 and `MaxScale` (-10 to 20) to 20.
+
+**Failed OTLP exports**
+- SDKs built on Core log a failed OTLP metric export as a warning, "OTLP metric export failed; metrics may be dropped", through Core telemetry. If metrics are missing, check Worker logs for it before blaming the dashboard.
+
 ## Prometheus Configuration for SDK Scrape
 <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:68-91 -->
 
