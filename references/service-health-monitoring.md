@@ -126,6 +126,27 @@ The metric `temporal_cloud_v1_resource_exhausted_error_count` is the primary ind
 
 Persistent non-zero values of this metric are unexpected. <!-- docs/cloud/service-health.mdx:152 -->
 
+It counts a single resource (Namespace, Task Queue or Workflow ID) receiving a burst larger than it can absorb. It is distinct from throttling against account limits, which the `*_throttled_count` metrics report; limits-driven throttling slows a workload, so it is generally the more important signal.
+
+### Workflow Lock Contention (BusyWorkflow)
+
+The most common cause of resource exhaustion is lock contention on one Workflow Execution: mutations (Start, Signal, etc.) are serialized under a per-Workflow lock, and a request returns a retryable `ResourceExhausted` error with cause `BUSY_WORKFLOW` if the wait times out.
+
+It shows up in `temporal_cloud_v1_resource_exhausted_error_count`, and raising Actions, Requests or Operations limits does not resolve it.
+
+To confirm: first rule out account-limit throttling (elevated throttle metrics); if within limits and the metric is still non-zero, break it down by the `operation` label, since contention concentrates on operations that target individual executions.
+
+| `operation` | Fix |
+|---|---|
+| `StartWorkflowExecution` | Look for duplicate starts of the same Workflow ID; retry with backoff, reduce concurrent requests to that ID. |
+| `SignalWorkflowExecution`, `SignalWithStartWorkflowExecution` | Batch or coalesce Signals, or shard across more executions. |
+| `UpdateWorkflowExecution` | Cap in-flight Updates per execution (limit is 10). |
+| `RecordActivityTaskHeartbeat` | Lengthen heartbeat timeout and interval; fewer Activities heartbeating into one execution. |
+| `RespondWorkflowTaskCompleted` | Keep parallel Activities/Child Workflows per execution to 500 or fewer; use sliding-window batching. |
+| `QueryWorkflow` | Reduce concurrent Queries to the execution; resolve Workflow Task failures first. |
+
+At low, brief rates this is benign because clients retry it. Investigate when sustained or correlated with rising latency on the affected operations.
+
 ## Monitoring Trends Against Limits
 <!-- docs/cloud/service-health.mdx:154-186 -->
 
@@ -140,6 +161,12 @@ The limit metrics provide a time series of values for limits. Use these with the
 | `temporal_cloud_v1_service_request_limit` | `temporal_cloud_v1_service_request_count` | `temporal_cloud_v1_service_request_throttled_count` |
 | `temporal_cloud_v1_operations_limit` | `temporal_cloud_v1_operations_count` | `temporal_cloud_v1_operations_throttled_count` |
 
+### Count Metrics Hide Bursts
+
+Count and limit metrics are per-second rates averaged over a 1-minute window, so a short burst is smoothed across the minute and the count can sit well below the limit while throttling occurred. Example: 60,000 Actions in one second against a 2,000 APS limit reports `total_action_count` of 1,000 while about 58,000 Actions were throttled.
+
+The throttle metric, not count versus limit, tells you throttling occurred. For spiky or latency-sensitive workloads, alert on the throttle metric directly (any value greater than zero). The same applies to Actions, service requests and operations.
+
 ### On-Demand Envelope Limits
 <!-- docs/cloud/service-health.mdx:165-176 -->
 
@@ -152,6 +179,16 @@ For Namespaces using provisioned capacity, the following metrics show what limit
 | `temporal_cloud_v1_service_request_on_demand_envelope_limit` | `temporal_cloud_v1_service_request_limit` |
 
 For Namespaces already in on-demand mode, these metrics track the same values as their equivalent limit metrics. <!-- docs/cloud/service-health.mdx:176 -->
+
+### Provisioned Capacity (TRU) Utilization
+
+`temporal_cloud_v1_provisioned_capacity_tru_count` is the number of TRUs provisioned for a Namespace; `0` means On-Demand Capacity.
+
+Each TRU provides 500 Actions per second. Each TRU after the first has an hourly minimum of 360,000 Actions (20% of its capacity), and billing uses the highest TRU count during the hour.
+
+Additional billed Actions per calendar hour = `max(0, hourly minimum Actions - workload Actions)`. Workload Actions are `total_action_count` with `is_background=false`, each one-minute rate multiplied by 60 and summed over the hour. Hourly minimum Actions are (max observed TRU count in the hour - 1) x 360,000.
+
+This is an estimate from OpenMetrics; use Usage and Billing as the source of truth for billed Actions.
 
 ### Alerting Guidance
 <!-- docs/cloud/service-health.mdx:181-186 -->

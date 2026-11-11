@@ -38,9 +38,11 @@ Some labels are opt-in due to high cardinality. They are not included by default
 | Label | Available on | Description |
 |---|---|---|
 | `temporal_activity_type` | Activity metrics | The activity type name |
-| `temporal_worker_deployment_name` | `temporal_cloud_v1_approximate_backlog_count` | The Worker Deployment name |
-| `temporal_worker_build_id` | `temporal_cloud_v1_approximate_backlog_count` | The Worker Deployment Version Build ID |
+| `temporal_worker_deployment_name` | `temporal_cloud_v1_approximate_backlog_count`, `temporal_cloud_v1_approximate_backlog_age` | The Worker Deployment name |
+| `temporal_worker_build_id` | `temporal_cloud_v1_approximate_backlog_count`, `temporal_cloud_v1_approximate_backlog_age` | The Worker Deployment Version Build ID |
 | `worker_version` | `temporal_cloud_v1_approximate_backlog_count` | **Deprecated.** Legacy Worker Build ID from pre-Worker-Deployments versioning API. Use `temporal_worker_deployment_name` and `temporal_worker_build_id` instead |
+| `nexus_service` | Nexus metrics | The Nexus Service name |
+| `nexus_operation` | Nexus metrics | The Nexus Operation name |
 
 Enable a single opt-in label: <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:69-71 -->
 ```
@@ -104,7 +106,9 @@ The number of pollers that are actively long polling for a task. Use this to tra
 ### `temporal_cloud_v1_resource_exhausted_error_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:125-133 -->
 
-Resource exhaustion errors per second. This metric does not include throttling due to Namespace limits.
+Resource exhaustion errors per second, incremented when a single resource receives a burst larger than it can absorb. SDKs retry these errors gracefully. This metric does not include throttling due to Namespace limits; use the throttle metrics (e.g., `temporal_cloud_v1_total_action_throttled_count`) for that.
+
+Workflow lock contention (cause `BUSY_WORKFLOW`) is also counted here, not in the throttle metrics; see `service-health-monitoring.md` § Workflow Lock Contention.
 
 | Label | Description |
 |---|---|
@@ -455,6 +459,21 @@ The approximate number of tasks pending in a task queue. Started Activities are 
 
 **Type:** Value
 
+### `temporal_cloud_v1_approximate_backlog_age`
+
+The approximate age, in seconds, of the oldest task in a task queue backlog.
+
+This metric is approximate and has the same accuracy limitations as `temporal_cloud_v1_approximate_backlog_count` (can overcount; can reset to zero on an idle Task Queue).
+
+| Label | Description |
+|---|---|
+| `temporal_task_queue` | The task queue name |
+| `task_type` | Type of task: `workflow` or `activity` |
+| `temporal_worker_deployment_name` | The Worker Deployment name (opt-in) |
+| `temporal_worker_build_id` | The Worker Deployment Version Build ID (opt-in) |
+
+**Type:** Value
+
 ### `temporal_cloud_v1_poll_success_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:541-552 -->
 
@@ -535,7 +554,9 @@ Does not include the `region` label. Actions are scoped to the Namespace level.
 ### `temporal_cloud_v1_billable_action_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:611-633 -->
 
-The number of billable actions per second, broken down by action type and Workflow Type. Not all billable actions are included in this metric. This metric is currently in Public Preview.
+The number of billable actions per second, broken down by action type and Workflow Type. Not all billable actions are included in this metric.
+
+This metric is an estimate and can differ by up to 5% from the absolute Action counts recorded by metering. For exact totals use the Usage dashboard or Billing API.
 
 This metric could have high cardinality depending on the number of action types and workflow types.
 
@@ -581,36 +602,75 @@ Operations throttled due to rate limits per second.
 
 ---
 
+## Nexus Metrics
+
+Public Preview.
+
+- Operation metrics (`temporal_cloud_v1_nexus_operation_*`) measure calls from the caller side, so `temporal_namespace` is the caller Namespace. Request metrics (`temporal_cloud_v1_nexus_request_*`) measure the handler side, so `temporal_namespace` is the handler Namespace.
+- Operation metrics that include `temporal_workflow_type` use the placeholder `__temporal_standalone_nexus_operation__` for Standalone Nexus Operations (started without a caller Workflow).
+- Latency intervals: request latency is handler time for one request (for an async start it ends when the start request finishes, not when the Operation completes); schedule-to-close runs from scheduling to a terminal state; schedule-to-start runs from scheduling to async start (for sync or never-started Operations it equals schedule-to-close); start-to-close is not recorded for those Operations.
+- Operation labels don't distinguish sync from async Operations, so schedule-to-close and schedule-to-start series mix both.
+- High cardinality: `nexus_service` and `nexus_operation` are opt-in labels.
+
+| Metric | Type |
+|---|---|
+| `temporal_cloud_v1_nexus_operation_schedule_to_close_latency_p50` / `_p95` / `_p99` | Latency |
+| `temporal_cloud_v1_nexus_operation_schedule_to_start_latency_p50` / `_p95` / `_p99` | Latency |
+| `temporal_cloud_v1_nexus_operation_start_to_close_latency_p50` / `_p95` / `_p99` | Latency |
+| `temporal_cloud_v1_nexus_operation_success_count`, `_cancel_count`, `_terminate_count`, `_fail_count`, `_timeout_count` | Rate (per second) |
+| `temporal_cloud_v1_nexus_request_count`, `temporal_cloud_v1_nexus_request_error_count` | Rate (per second) |
+| `temporal_cloud_v1_nexus_request_latency_p50` / `_p95` / `_p99` | Latency |
+
+Operation metrics carry the `nexus_endpoint` label; request metrics add `nexus_caller_type`.
+
+---
+
 ## Schedule Metrics
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:665 -->
 
 ### `temporal_cloud_v1_schedule_action_success_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:667-669 -->
 
-Successfully executed scheduled workflows per second.
+Successful scheduled executions per second.
 
 **Type:** Rate
 
 ### `temporal_cloud_v1_schedule_buffer_overruns_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:671-674 -->
 
-The rate of schedule buffer overruns when using `BUFFER_ALL` overlap policy.
+Scheduled executions dropped per second because the Schedule's internal Action buffer is full.
 
 **Type:** Rate
 
 ### `temporal_cloud_v1_schedule_missed_catchup_window_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:676-679 -->
 
-The rate of missed schedule executions outside the catchup window.
+Scheduled executions permanently dropped per second because they fell outside the Catchup Window. Not emitted for backfills.
 
 **Type:** Rate
 
 ### `temporal_cloud_v1_schedule_rate_limited_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:681-684 -->
 
-The rate of scheduled workflows delayed due to rate limiting.
+**Deprecated.** Scheduled executions delayed per second due to rate limiting. It is being replaced by standard request-per-second rate limit monitoring and will be removed once that is rolled out to all of Temporal Cloud.
 
 **Type:** Rate
+
+### `temporal_cloud_v1_schedule_overlap_skipped_count`
+
+Schedule executions dropped per second due to the overlap policy. Emitted for `SKIP` when another execution is running or already selected, and for `BUFFER_ONE` when its single buffered slot is occupied. It can also be emitted during backfills that use `SKIP` or `BUFFER_ONE`. A sustained rate can indicate that executions are generated faster than they complete.
+
+| Label | Description |
+|---|---|
+| `schedule_overlap_policy` | The overlap policy that caused the execution to be dropped |
+
+**Type:** Rate
+
+### `temporal_cloud_v1_schedule_action_e2e_delay_p50` / `_p95` / `_p99`
+
+The 50th, 95th or 99th percentile total delay from an execution's scheduled time to actual start, in seconds. Includes overlap-policy wait. Not emitted for backfills.
+
+**Type:** Latency
 
 ---
 
@@ -695,5 +755,13 @@ Does not include the `region` label. Limits are scoped to the Namespace level.
 The on-demand envelope limit for service requests per second. For Namespaces in provisioned capacity mode, this shows what the service request limit would be if operating in on-demand mode. For Namespaces already in on-demand mode, this tracks the same value as `temporal_cloud_v1_service_request_limit`.
 
 Does not include the `region` label. Limits are scoped to the Namespace level.
+
+**Type:** Value
+
+### `temporal_cloud_v1_provisioned_capacity_tru_count`
+
+The number of Temporal Resource Units (TRUs) provisioned for a Namespace. This is `0` for Namespaces that are not in provisioned capacity mode.
+
+Does not include the `region` label. Provisioned capacity is scoped to the Namespace level.
 
 **Type:** Value

@@ -155,6 +155,11 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 - SDK histogram units: milliseconds (TypeScript, Python, .NET) vs seconds (Go, Java).
 - v1 pre-calculated percentiles (p50, p95, p99) cannot be accurately aggregated across dimensions.
 - `temporal_cloud_v1_approximate_backlog_count` is approximate — can overcount and resets to zero on idle queues.
+- `temporal_cloud_v1_approximate_backlog_age` (seconds, oldest queued task) has the same accuracy limits as the backlog count.
+- Cloud metrics are 1-minute aggregates: a sub-minute burst can leave the count below the limit while throttling occurred. Judge throttling by the `*_throttled_count` metric, not count versus limit.
+- `temporal_cloud_v1_resource_exhausted_error_count` excludes Namespace-limit throttling; Workflow lock contention (`BUSY_WORKFLOW`) lands here, and raising limits does not fix it.
+- Action metrics (`total_action_count`, `billable_action_count`) are estimates, up to 5% off metered Actions.
+- `temporal_cloud_v1_schedule_rate_limited_count` is deprecated. Newer series: Nexus (`temporal_cloud_v1_nexus_*`), `schedule_overlap_skipped_count`, `schedule_action_e2e_delay_p*`, `approximate_backlog_age`, `provisioned_capacity_tru_count`; see the catalog.
 - Self-hosted Frontend Service health checks: port 7233, not 8080.
 - `worker_version` label is deprecated — use `temporal_worker_deployment_name` and `temporal_worker_build_id`.
 
