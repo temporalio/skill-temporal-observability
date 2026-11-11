@@ -12,6 +12,23 @@ All SDK metrics are prefixed with `temporal_` before being exported to their con
 
 SDK metrics are distinct from Cloud metrics (`temporal_cloud_v1_*`) and self-hosted cluster metrics (e.g., `service_requests`). They are emitted by the application-side SDK, not the Temporal Service.
 
+## Metric Names in Queries
+
+Names in this reference are base names. Prometheus adds `_total` to counters (`temporal_request_failure_total`), `_seconds_bucket` to histogram bucket series, and nothing to gauges (`temporal_num_pollers`, `temporal_sticky_cache_size`).
+Check the real names at your metrics endpoint before editing dashboards or alerts.
+
+`activity_schedule_to_start_latency` has no `activity_type` or `workflow_type` tag worth grouping by: where an SDK adds them, the value doesn't vary.
+
+## Global Tags (team, environment)
+
+To add the same tags to every Client and Worker metric:
+- Go: `metricsHandler.WithTags(map)` before setting `client.Options.MetricsHandler`
+- Java: `RootScopeBuilder.tags`
+- Python: `global_tags` on `TelemetryConfig`
+- TypeScript: `globalTags` in `Runtime.install` metrics options; not sent to a buffered exporter
+- .NET: `GlobalTags` on `MetricsOptions`
+- Ruby: `global_tags` on `MetricsOptions`
+
 ## Metric Unit Differences Across SDKs
 <!-- docs/references/sdk-metrics.mdx:55-65 -->
 
@@ -90,6 +107,7 @@ Each metric may have some combination of the following tags:
 | `worker_type` | One of: `ActivityWorker`, `WorkflowWorker`, `LocalActivityWorker` (Go and Java only), `NexusWorker` (Go and Java only) |
 | `activity_type` | The name of the Activity Function |
 | `workflow_type` | The name of the Workflow Function |
+| `failure_reason` | Why a Workflow Task, Activity, or Nexus Task failed; Workflow Task and Activity values listed under Failure Metrics |
 | `operation` | RPC method name; available for metrics related to Temporal Client gRPC requests |
 
 Some tags may not be available in every SDK, and Histogram metrics may have different buckets in each SDK. <!-- docs/references/sdk-metrics.mdx:85 -->
@@ -136,7 +154,7 @@ Time to complete an Activity Execution, from the time the Activity Task is gener
 
 - Type: Histogram
 - Available in: Core, Go, Java
-- Tags: `activity_type`, `namespace`, `task_queue`
+- Tags: `activity_type`, `namespace`, `task_queue`, `workflow_type`
 
 #### `temporal_workflow_endtoend_latency`
 <!-- docs/references/sdk-metrics.mdx:489-495 -->
@@ -247,9 +265,12 @@ A Workflow Task Execution failed.
 - Available in: Core, Go, Java
 - Tags: `namespace`, `task_queue`, `workflow_type`, `failure_reason`
 
-Valid values for `failure_reason`: <!-- docs/references/sdk-metrics.mdx:513-516 -->
-- `NonDeterminismError`: The Workflow Task failed due to a non-determinism error.
-- `WorkflowError`: The Workflow Task failed for any other reason.
+Valid values for `failure_reason`:
+- `NonDeterminismError`: non-determinism error.
+- `GrpcMessageTooLarge`: response exceeded the gRPC message size limit; the Service terminates the Workflow Execution.
+- `PayloadsTooLarge`: a Payload or Memo exceeded the Namespace size limit; retryable.
+- `RequestTooLarge`: the whole completion exceeded the Namespace request size limit; retried.
+- `WorkflowError`: any other reason.
 
 #### `temporal_activity_execution_failed`
 <!-- docs/references/sdk-metrics.mdx:148-153 -->
@@ -258,7 +279,9 @@ An Activity Execution failed. Does not include local Activity Failures in Go and
 
 - Type: Counter
 - Available in: Core, Go, Java
-- Tags: `activity_type`, `namespace`, `task_queue`
+- Tags: `activity_type`, `namespace`, `task_queue`, `workflow_type`, `failure_reason`
+
+`failure_reason` values: `PayloadsTooLarge` (Payload exceeded the Namespace size limit; failed as retryable) or `ActivityError` (any other reason).
 
 ## Complete Metric List
 
