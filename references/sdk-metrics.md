@@ -22,6 +22,12 @@ The unit of measurement for Histogram metrics varies by SDK:
 
 The Core SDK is a shared common core library used by TypeScript, Python, and .NET SDKs. <!-- docs/references/sdk-metrics.mdx:61 -->
 
+## OTLP Exponential Histograms (.NET)
+
+Set `OpenTelemetryOptions.HistogramAggregation` to `new OpenTelemetryHistogramAggregation.Base2Exponential()` to export every histogram, including custom ones, as a base-2 exponential histogram (a Prometheus native histogram); the default is `ExplicitBuckets`.
+It cannot be combined with `HistogramBucketOverrides`.
+`NameSuffix` defaults to `_native` and is appended to every histogram name; `MaxSize` defaults to 160 and `MaxScale` to 20 (range -10 to 20).
+
 ## Exposing a Metrics Endpoint
 <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:46-66 -->
 
