@@ -41,6 +41,15 @@ Create a Grafana panel called "Poll Success Rate".
 3. **`temporal_sticky_cache_total_forced_eviction`**: Alert at >{predetermined_high_number}. Available in Go SDK and Java SDK only. <!-- docs/cloud/worker-health.mdx:82-86 -->
 4. **`temporal_cloud_v1_approximate_backlog_count`**: Alert when the value is growing over time for a given Task Queue. This provides a server-side view of how many Tasks are waiting in a Task Queue and complements the SDK Schedule-to-Start latency metrics. <!-- docs/cloud/worker-health.mdx:88-91 -->
 
+Alert tuning from the Worker alerting best practices:
+
+- Every alert should group by `namespace` plus the tags in its condition.
+- Pick thresholds from your own observed healthy p99, not the listed values. Several conditions (pollers reaching 0, NOT_FOUND on respond operations, short-lived non-determinism errors) appear briefly during a rolling restart, so set `for` longer than a deploy takes rather than lowering the threshold.
+- `worker_task_slots_available` reports meaningful values only with fixed-size slot suppliers; with resource-based tuning, skip it and alert on schedule-to-start latency.
+- Gauges such as `temporal_num_pollers`, `temporal_worker_task_slots_available` and `temporal_sticky_cache_size` take no `_total` suffix; counters do.
+- An idle Task Queue legitimately reports zero Task completions and an empty sticky cache, so pair those alerts with a demand signal. Workers autoscaled to zero legitimately report no pollers or free slots; exclude them.
+- `workflow_task_execution_failed` `failure_reason` values to alert on at any occurrence: `NonDeterminismError`, `GrpcMessageTooLarge`, `RequestTooLarge`.
+
 ---
 
 ## Detect Task Backlog

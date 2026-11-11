@@ -107,7 +107,7 @@ Consult `references/ops-diagnostics-reference.md`:
 
 Cross-reference thresholds and detailed metric descriptions from:
 - `references/worker-health-monitoring.md` — backlog, sync match, poll success, task slots, sticky cache
-- `references/service-health-monitoring.md` — failure rates, error rates, limits, replication
+- `references/service-health-monitoring.md` — failure rates, error rates, limits, replication lag, detecting a failover or regional outage
 - `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps
 
 ### Step D5: Explain Then Prescribe

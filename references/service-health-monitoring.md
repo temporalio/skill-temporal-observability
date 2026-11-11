@@ -119,6 +119,20 @@ Replication lag refers to the transmission delay of Workflow updates and history
 
 Temporal owns replication lag. There is no SLA for replication lag. Temporal recommends that customers do not trigger failovers except for testing or emergency situations. Customers who decide to trigger failovers should examine this metric before proceeding. Contact Temporal support if you have a pressing need. <!-- docs/cloud/service-health.mdx:125-136 -->
 
+### Detecting a Failover or Regional Outage
+
+With some Worker deployment patterns, notably Active/Passive, detecting an outage is your responsibility: Workflows make no progress until you detect it and bring up Workers in the new active region.
+
+- A failover is signaled by the Namespace's active region changing, and by a `"operation": "FailoverNamespace"` entry in the audit log.
+- To detect a regional outage directly, before or independently of a failover, watch for:
+  - A spike in replication lag between the primary and the replica (`temporal_cloud_v1_replication_lag_p50`/`p95`/`p99`, labeled `temporal_namespace`).
+  - A drop in Workflow throughput, such as the rate of Workflows started, completed, or Tasks processed.
+  - A spike in errors, or a drop in throughput, across your overall stack, not just Temporal.
+  - Errors or failovers in other cloud systems you depend on, such as databases, queues, or other regional services.
+- Temporal Cloud strives for a P95 replication lag under 1 minute.
+- If the replica is unhealthy, Temporal Cloud disables the "Trigger a failover" option in the UI.
+- With a replica, `temporal_cloud_v1_total_action_count` is 2x its pre-replica value, because Actions occur on both primary and replica; don't read that as a usage spike.
+
 ## Detecting Resource Exhaustion
 <!-- docs/cloud/service-health.mdx:147-153 -->
 
@@ -165,3 +179,16 @@ When setting alerts against limits, consider workload characteristics: <!-- docs
 - Some workloads choose to exceed limits and accept throttling because they are not latency sensitive.
 
 A [Grafana dashboard example](https://github.com/grafana/jsonnet-libs/blob/master/temporal-mixin/dashboards/temporal-overview.json) includes a Usage & Quotas section with demo charts for limits and count metrics. <!-- docs/cloud/service-health.mdx:178-179 -->
+
+### Grafana Action Cost Dashboard and Alert Rules
+
+`temporalio/observability-examples` ships a Grafana dashboard, "Temporal Cloud - Actions MTD & Spike Detection" (`cloud/temporal_cloud_action_costs.json`), and sample alert rules for it (`cloud/temporal_cloud_action_costs_alerts.yaml`).
+
+- The YAML is a Grafana unified-alerting provisioning file, imported separately from the dashboard JSON. Replace every `PROM_DS_UID` with your Prometheus data source UID before import.
+- Rules link back to the dashboard through `__dashboardUid__` annotations (the two spike rules also set `__panelId__`), which only work while the dashboard uid stays `temporal-cloud-action-costs`; update the annotations if you re-key it.
+- Three per-namespace rules (`sum by (temporal_namespace)` over `temporal_cloud_v1_total_action_count`), evaluated every 5m in group `temporal-cloud-action-spikes`:
+  - `tcloud-action-spike-24h`: warning, fires when the rate is more than 50% above the same time 24h ago (`offset 1d`), for 10m.
+  - `tcloud-action-spike-7d`: warning, more than 75% above 7 days ago (`offset 7d`), for 10m; looser because week-over-week varies more.
+  - `tcloud-action-limit-approaching`: critical, `total_action_count{is_background="false"}` over its own `temporal_cloud_v1_action_limit` above 80%, for 5m.
+- Spike rules catch increases only, not drops (for example Workers going down).
+- The 50%, 75% and 80% thresholds are starting points: watch for a week or two and adjust the `params` values to your traffic.
