@@ -294,7 +294,7 @@ w := worker.New(c, "my-task-queue", worker.Options{
 #### Python SDK
 <!-- docs/cloud/worker-health.mdx:420-424 -->
 
-Available since Python SDK v1.20.0. Use `TelemetryConfig()` to adjust heartbeat settings. <!-- docs/cloud/worker-health.mdx:422-424 -->
+Available since Python SDK v1.20.0. Set `worker_heartbeat_interval` (a `timedelta`, default 60s, `None` disables) on `Runtime(...)`, not on `TelemetryConfig`.
 
 #### TypeScript SDK
 <!-- docs/cloud/worker-health.mdx:427-432 -->
@@ -314,4 +314,18 @@ Available since Java SDK v1.35.0. Set the heartbeat interval on `WorkflowClientO
 #### Ruby SDK
 <!-- docs/cloud/worker-health.mdx:451-455 -->
 
-Available since Ruby SDK v1.1.0. Add configurations to `Runtime()` to adjust heartbeat settings. <!-- docs/cloud/worker-health.mdx:453-455 -->
+Available since Ruby SDK v1.1.0. Set `worker_heartbeat_interval:` (seconds, default 60, `nil` disables) on `Temporalio::Runtime.new`.
+
+### Heartbeat Content and Opt-Out
+
+Heartbeats also report SDK runtime, hosting environment and OS/architecture, once per Worker.
+Opt out with:
+- Python (1.32.0): `Runtime(disable_environment_info=True)`.
+- Ruby: `Runtime.new(disable_environment_info: true)`.
+- Go (Experimental, 1.49.0): `client.Options.DisableWorkerEnvironmentInfo`.
+- Rust: `RuntimeOptions::disable_environment_info`.
+
+Workers send no heartbeat until the Worker starts running.
+Python 1.35.0 fixed slot and poller counts of `0` with `MetricBuffer`.
+Python 1.36.0 heartbeats add the poller target.
+Python 1.36.0 heartbeats add plugin `version()`.
