@@ -220,3 +220,28 @@ A "hit" means the Worker finds the Workflow in its cache, allowing immediate pro
 <!-- docs/troubleshooting/performance-bottlenecks.mdx:294-305 -->
 
 A "forced eviction" means a Workflow Execution was removed from the cache before it completed, typically because the cache was full. A high rate of forced evictions could indicate that cache size is too small for the workload; increase the `WorkflowCacheSize` setting if Worker resources allow. <!-- docs/troubleshooting/performance-bottlenecks.mdx:301-305 -->
+
+## Worker Log Signals
+
+### `[TMPRL1104]` slow Workflow Task warning
+
+Workers log a `[TMPRL1104]` warning when a Workflow Task takes longer than a threshold, 5 seconds by default.
+`TEMPORAL_WORKFLOW_TASK_DURATION_WARN_SECONDS` overrides the default; an unparsable value falls back to 5 (Go, Rust).
+
+### Core console log format
+
+Core console logs are `compact` (default), `pretty` or `json`:
+
+- Python: `LoggingConfig(format=LoggingFormat.JSON)`, ignored when `forwarding` is set.
+- Ruby: `LoggingOptions.new(log_format: ConsoleLogFormat::JSON)`.
+- TypeScript: `logging: { console: { format: 'json' } }`.
+
+### Persistent poll error warning (autoscaling pollers)
+
+Workers using autoscaling pollers log `Task polling has encountered errors continuously; the worker will continue retrying` once poll errors have lasted 60 seconds.
+Repeat warnings back off exponentially (factor 2) up to a 15 minute cap, and a successful poll resets the timer.
+The warning is only emitted for `PollerBehavior::Autoscaling`.
+
+### Python log forwarding and Runtime lifetime
+
+Clients and workers each hold a clone of the Runtime, so Core log forwarding (`forwarding` set) stops only when the last clone is dropped. Dropping one client or worker does not stop it. This was shipped in sdk-python 1.35.0 (absent in 1.34.0).
