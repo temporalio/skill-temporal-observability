@@ -38,9 +38,13 @@ Some labels are opt-in due to high cardinality. They are not included by default
 | Label | Available on | Description |
 |---|---|---|
 | `temporal_activity_type` | Activity metrics | The activity type name |
-| `temporal_worker_deployment_name` | `temporal_cloud_v1_approximate_backlog_count` | The Worker Deployment name |
-| `temporal_worker_build_id` | `temporal_cloud_v1_approximate_backlog_count` | The Worker Deployment Version Build ID |
+| `temporal_worker_deployment_name` | `temporal_cloud_v1_approximate_backlog_count`, `temporal_cloud_v1_approximate_backlog_age` | The Worker Deployment name |
+| `temporal_worker_build_id` | `temporal_cloud_v1_approximate_backlog_count`, `temporal_cloud_v1_approximate_backlog_age` | The Worker Deployment Version Build ID |
+| `nexus_service` | Nexus metrics | The Nexus Service name |
+| `nexus_operation` | Nexus metrics | The Nexus Operation name |
 | `worker_version` | `temporal_cloud_v1_approximate_backlog_count` | **Deprecated.** Legacy Worker Build ID from pre-Worker-Deployments versioning API. Use `temporal_worker_deployment_name` and `temporal_worker_build_id` instead |
+
+Nexus labels `nexus_service` and `nexus_operation` are opt-in to manage cardinality.
 
 Enable a single opt-in label: <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:69-71 -->
 ```
@@ -432,6 +436,18 @@ The 99th percentile activity schedule-to-close latency in seconds. Avoid aggrega
 
 ---
 
+## Nexus Metrics (Public Preview)
+
+All `temporal_cloud_v1_nexus_*` metrics are Public Preview.
+
+- **Operation metrics (caller side):** `temporal_namespace` is the caller Namespace. Latency `nexus_operation_{schedule_to_close,schedule_to_start,start_to_close}_latency_{p50,p95,p99}`; counts `nexus_operation_{success,cancel,terminate,fail,timeout}_count`. Labels: `nexus_endpoint`, `temporal_workflow_type` (`timeout_count` adds `timeout_type`).
+- **Request metrics (handler side):** `temporal_namespace` is the handler Namespace. `nexus_request_count`, `nexus_request_error_count`, `nexus_request_latency_{p50,p95,p99}`. Labels: `nexus_endpoint`, `nexus_caller_type`.
+- Opt-in labels `nexus_service` and `nexus_operation` apply to all of them (see Opt-in Labels).
+- Start-to-close latency is not recorded for an Operation that completes synchronously or closes without starting; its schedule-to-start latency then equals schedule-to-close.
+- Labels don't distinguish sync from async completion, so schedule-to-close and schedule-to-start series can't be filtered by it.
+- Don't aggregate latency percentiles across dimensions.
+- Each metric's stage is also reported as `release_stage` (`public-preview`, `general-availability`, `deprecated`) by `GET /v1/descriptors`.
+
 ## Task Queue Metrics
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:509-515 -->
 
@@ -452,6 +468,12 @@ The approximate number of tasks pending in a task queue. Started Activities are 
 | `temporal_worker_deployment_name` | The Worker Deployment name (opt-in) |
 | `temporal_worker_build_id` | The Worker Deployment Version Build ID (opt-in) |
 | `worker_version` | **Deprecated.** Legacy Worker Build ID (opt-in). Use `temporal_worker_deployment_name` and `temporal_worker_build_id` instead |
+
+**Type:** Value
+
+### `temporal_cloud_v1_approximate_backlog_age`
+
+The approximate age, in seconds, of the oldest task in a task queue backlog. Same accuracy limitations as `approximate_backlog_count`. Labels: `temporal_task_queue`, `task_type`, and opt-in `temporal_worker_deployment_name`, `temporal_worker_build_id`.
 
 **Type:** Value
 
@@ -535,7 +557,7 @@ Does not include the `region` label. Actions are scoped to the Namespace level.
 ### `temporal_cloud_v1_billable_action_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:611-633 -->
 
-The number of billable actions per second, broken down by action type and Workflow Type. Not all billable actions are included in this metric. This metric is currently in Public Preview.
+The number of billable actions per second, broken down by action type and Workflow Type. Not all billable actions are included in this metric. This metric is currently in Public Preview. It is an estimate that can differ by up to 5% from the absolute Action counts recorded by metering.
 
 This metric could have high cardinality depending on the number of action types and workflow types.
 
@@ -594,23 +616,35 @@ Successfully executed scheduled workflows per second.
 ### `temporal_cloud_v1_schedule_buffer_overruns_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:671-674 -->
 
-The rate of schedule buffer overruns when using `BUFFER_ALL` overlap policy.
+Executions dropped per second because the Schedule's internal Action buffer is full.
 
 **Type:** Rate
 
 ### `temporal_cloud_v1_schedule_missed_catchup_window_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:676-679 -->
 
-The rate of missed schedule executions outside the catchup window.
+Executions permanently dropped per second outside the Catchup Window. Not emitted for backfills.
 
 **Type:** Rate
 
 ### `temporal_cloud_v1_schedule_rate_limited_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:681-684 -->
 
-The rate of scheduled workflows delayed due to rate limiting.
+**Deprecated.** The rate of scheduled workflows delayed due to rate limiting; being replaced by standard request-per-second rate limit monitoring.
 
 **Type:** Rate
+
+### `temporal_cloud_v1_schedule_overlap_skipped_count`
+
+Executions dropped per second by the overlap policy: `SKIP` when another execution is running or selected, `BUFFER_ONE` when its single buffered slot is occupied (also possible in backfills). Label: `schedule_overlap_policy`.
+
+**Type:** Rate
+
+### `temporal_cloud_v1_schedule_action_e2e_delay_p50` / `_p95` / `_p99`
+
+Percentile delay in seconds from an execution's scheduled time to actual start. Includes overlap-policy wait. Not emitted for backfills. Don't aggregate across dimensions.
+
+**Type:** Latency
 
 ---
 
