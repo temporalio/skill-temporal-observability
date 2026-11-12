@@ -168,7 +168,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
 | Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
 | Setting up monitoring for a self-hosted Temporal Service | Consult `references/self-hosted-monitoring.md` |
-| Asks about TRUs/capacity, throttle metrics, `BUSY_WORKFLOW` lock contention, or the Id reuse limit | Consult `references/capacity-throttling.md` |
+| Asks about TRUs/capacity, throttle metrics, BusyWorkflow lock contention, or the Id reuse limit | Consult `references/capacity-throttling.md` |
 | Wants to monitor Temporal Cloud service health (latency, error rates, failures, limits) | Consult `references/service-health-monitoring.md` |
 | Needs to monitor Worker fleet health (backlog, greedy workers, misconfigured workers, sticky cache) | Consult `references/worker-health-monitoring.md` |
 | Migrating from PromQL/v0 to OpenMetrics/v1 | Consult `references/migration-v0-to-v1.md` |
