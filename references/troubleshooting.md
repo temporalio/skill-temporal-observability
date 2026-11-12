@@ -225,15 +225,15 @@ A "forced eviction" means a Workflow Execution was removed from the cache before
 
 ### `[TMPRL1104]` slow Workflow Task warning
 
-Workers log a `[TMPRL1104]` warning when a Workflow Task takes longer than 5 seconds.
-Set `TEMPORAL_WORKFLOW_TASK_DURATION_WARN_SECONDS` to change the threshold; an unparsable value falls back to 5 (Go, Rust).
+Workers log a `[TMPRL1104]` warning when a Workflow Task takes longer than a threshold, 5 seconds by default.
+`TEMPORAL_WORKFLOW_TASK_DURATION_WARN_SECONDS` overrides the default; an unparsable value falls back to 5 (Go, Rust).
 
 ### Core console log format
 
 Core console logs are `compact` (default), `pretty` or `json`:
 
 - Python: `LoggingConfig(format=LoggingFormat.JSON)`, ignored when `forwarding` is set.
-- Ruby: `LoggingOptions(log_format: ConsoleLogFormat::JSON)`.
+- Ruby: `LoggingOptions.new(log_format: ConsoleLogFormat::JSON)`.
 - TypeScript: `logging: { console: { format: 'json' } }`.
 
 ### Persistent poll error warning (autoscaling pollers)
