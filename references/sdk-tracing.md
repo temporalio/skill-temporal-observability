@@ -4,23 +4,17 @@ This reference covers the OpenTelemetry and OpenTracing tracing interceptors for
 
 ## .NET
 
-Add `TracingInterceptor.ClientSource.Name`, `WorkflowsSource.Name`, `ActivitiesSource.Name`, and `NexusSource.Name` to the tracer provider with `AddSource`, and set `new TracingInterceptor()` in the client's `Interceptors`.
+Add `TracingInterceptor.NexusSource.Name` to the tracer provider with `AddSource`.
 
 Starting a standalone Activity from a client creates a `StartActivity:<activity type>` span, tagged with the Activity ID when `TagNameActivityId` is set.
 
 ## Go
 
-`contrib/opentelemetry` provides `NewTracingInterceptor(TracerOptions)`.
-
 The client-side interceptor creates a `StartActivity` span, tagged with the Activity ID, when a standalone Activity is started.
 
 ## Java
 
-The `temporal-opentracing` module uses OpenTracing. Register `OpenTracingClientInterceptor` on the Workflow client and `OpenTracingWorkerInterceptor` on the Worker factory.
-
-For standalone Activities, also register `OpenTracingActivityClientInterceptor` with `ActivityClientOptions.newBuilder().setInterceptors(...)`.
-
-OpenTelemetry users should bridge with `OpenTracingShim.createTracerShim()` and register it with `GlobalTracer.registerIfAbsent`.
+For standalone Activities, register `OpenTracingActivityClientInterceptor` with `ActivityClientOptions.newBuilder().setInterceptors(...)`.
 
 `updateWithStart` is traced with the `UpdateWithStartWorkflow` operation type.
 
