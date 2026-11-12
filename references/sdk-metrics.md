@@ -257,7 +257,7 @@ Valid values for `failure_reason`:
 
 This counter is recorded for every failed Workflow Task attempt, including later attempts whose failure Core does not report to the server (Core 0.10.0; Ruby v1.10.0, Python 1.34.0, TypeScript v1.25.0). One stuck Workflow Task therefore increments it on each attempt, so it is not a count of distinct Workflow Executions.
 
-Alert on each `failure_reason` separately: only `GrpcMessageTooLarge` terminates the Execution, the others are retried.
+With `GrpcMessageTooLarge` the Temporal Service terminates the Workflow Execution; `PayloadsTooLarge` and `RequestTooLarge` fail the Workflow Task as retryable.
 
 #### `temporal_activity_execution_failed`
 <!-- docs/references/sdk-metrics.mdx:148-153 -->
@@ -273,7 +273,7 @@ Valid values for `failure_reason`:
 - `ExternalStorageError`: Core-based SDKs report this when the Activity Task failed on an External Storage error.
 - `ActivityError`: The Activity Task failed for any other reason.
 
-To track failures in Activity code and its dependencies, filter on `failure_reason=ActivityError`; alert on `PayloadsTooLarge` at any occurrence.
+To track failures in Activity code and its dependencies, the docs suggest filtering on `failure_reason=ActivityError`, and alerting on any occurrence of `PayloadsTooLarge`.
 
 #### `temporal_local_activity_execution_failed`
 
