@@ -315,3 +315,17 @@ Available since Java SDK v1.35.0. Set the heartbeat interval on `WorkflowClientO
 <!-- docs/cloud/worker-health.mdx:451-455 -->
 
 Available since Ruby SDK v1.1.0. Add configurations to `Runtime()` to adjust heartbeat settings. <!-- docs/cloud/worker-health.mdx:453-455 -->
+
+### Heartbeat Content and Opt-Out
+
+Heartbeats also report SDK runtime, hosting environment and OS/architecture, once per Worker.
+Opt out with:
+- Python (1.32.0): `Runtime(disable_environment_info=True)`.
+- Ruby: `Runtime.new(disable_environment_info: true)`.
+- Go (Experimental, 1.49.0): `client.Options.DisableWorkerEnvironmentInfo`.
+- Rust: `RuntimeOptions::disable_environment_info`.
+
+Workers send no heartbeat until the Worker starts running.
+Python 1.35.0 fixed slot and poller counts of `0` with `MetricBuffer`.
+Python 1.36.0 heartbeats add the poller target.
+Python 1.36.0 heartbeats add plugin `version()`.
