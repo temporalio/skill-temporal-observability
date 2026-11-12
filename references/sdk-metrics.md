@@ -43,6 +43,19 @@ Working samples: <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:59-63 -->
 
 Some SDKs use OpenTelemetry to instrument metrics. A Prometheus exporter with OpenTelemetry can be used to expose metrics for scraping. <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:65-66 -->
 
+## Python OpenTelemetry
+
+- `OpenTelemetryPlugin(add_temporal_spans=False)` expects your tracer provider to be created with `create_tracer_provider()`; `add_temporal_spans` adds Temporal-specific spans such as StartWorkflow and RunWorkflow.
+- `MetricsExporter` (Experimental, 1.33.0+) drains a `temporalio.runtime.MetricBuffer` into an OpenTelemetry `MeterProvider` every `poll_interval` (default 1 second).
+- Wire the buffer into a `Runtime`, for example `Runtime(telemetry=TelemetryConfig(metrics=MetricBuffer(10_000)))` (10,000 is an example size). A full buffer drops updates, and the running exporter is what drains it.
+- Start it with `async with MetricsExporter(buffer, meter_provider):` or `run()` once the `Runtime` using the buffer exists; `shutdown()` stops it after a final drain. `run()` raises `RuntimeError` if the buffer was never attached to a `Runtime`.
+- `on_error` is called, in addition to logging, when draining or applying one update fails; if it raises, that is logged and ignored.
+- Counters are added, histograms recorded, and gauges exported as an observable gauge holding the latest value per attribute set.
+- `ReplaySafeMeterProvider` and `ReplaySafeLoggerProvider` drop recordings made from workflow code only while replaying; queries and update validators are not dropped.
+- `ReplaySafeMeterProvider` wraps counters, up-down counters, histograms and gauges; observable instruments pass through unwrapped.
+- 1.35.0 removed `TemporalIdGenerator.seed_span_id` and `seed_trace_id`.
+- 1.36.0 exports spans of rejected updates and failed queries: the replay-safe span used to skip ending a span holding a non-failure exception, and now ends it when running read-only (queries, update validators).
+
 ## Prometheus Configuration for SDK Scrape
 <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:68-91 -->
 
