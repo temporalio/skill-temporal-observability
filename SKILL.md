@@ -166,6 +166,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Wants to know which Cloud metrics exist, their types, or labels | Consult `references/cloud-metrics-catalog.md` for the complete `temporal_cloud_v1_*` catalog |
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
 | Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
+| Go user choosing OpenTelemetry v1 vs v2 (`opentelemetry-v2` plugin), or `UseMonotonicCounters` | Consult `references/go-opentelemetry.md` |
 | Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
 | Setting up monitoring for a self-hosted Temporal Service | Consult `references/self-hosted-monitoring.md` |
 | Wants to monitor Temporal Cloud service health (latency, error rates, failures, limits) | Consult `references/service-health-monitoring.md` |
