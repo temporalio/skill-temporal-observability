@@ -642,7 +642,7 @@ Executions dropped per second by the overlap policy: `SKIP` when another executi
 
 ### `temporal_cloud_v1_schedule_action_e2e_delay_p50` / `_p95` / `_p99`
 
-Percentile delay in seconds from an execution's scheduled time to actual start. Includes overlap-policy wait. Not emitted for backfills. Don't aggregate across dimensions.
+Percentile delay in seconds from an execution's scheduled time to actual start. Includes overlap-policy wait. Not emitted for backfills.
 
 **Type:** Latency
 
