@@ -24,7 +24,7 @@ w := worker.New(c, "my-task-queue", worker.Options{}) // workers get the plugin 
 
 - By default the plugin creates no spans of its own; it only propagates trace context. Set `PluginOptions.TracerOptions.AddTemporalSpans` to emit a span per Temporal operation (`StartWorkflow`, `RunWorkflow`, `RunActivity`, `ContinueAsNew`).
 - Metrics: set `PluginOptions.MetricsHandlerOptions` (non-nil) and the plugin installs an OTel metrics handler on the client.
-- Meter Provider: OTel's default global Meter Provider is a no-op, so with `MetricsHandlerOptions` you must supply a configured one yourself: call `otel.SetMeterProvider` before creating the plugin, or pass a meter in `MetricsHandlerOptions.Meter`.
+- Meter Provider: OTel's default global Meter Provider is a no-op, so `MetricsHandlerOptions` records nothing unless a configured one is set with `otel.SetMeterProvider` before creating the plugin, or a meter is passed in `MetricsHandlerOptions.Meter`.
 - If `Meter` is unset, the handler uses the global meter provider's meter named `temporal-sdk-go`.
 - `UseMonotonicCounters` is also on v2's `MetricsHandlerOptions`; example enabling both spans and metrics:
 
