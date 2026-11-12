@@ -48,7 +48,7 @@ Alert tuning from the Worker alerting best practices:
 - `worker_task_slots_available` reports meaningful values only with fixed-size slot suppliers; with resource-based tuning, skip it and alert on schedule-to-start latency.
 - Gauges such as `temporal_num_pollers`, `temporal_worker_task_slots_available` and `temporal_sticky_cache_size` take no `_total` suffix; counters do.
 - An idle Task Queue legitimately reports zero Task completions and an empty sticky cache, so pair those alerts with a demand signal. Workers autoscaled to zero legitimately report no pollers or free slots; exclude them.
-- `workflow_task_execution_failed` `failure_reason` values to alert on at any occurrence: `NonDeterminismError`, `GrpcMessageTooLarge`, `RequestTooLarge`.
+- `workflow_task_execution_failed` `failure_reason` values to alert on at any occurrence: `NonDeterminismError`, `GrpcMessageTooLarge`, `RequestTooLarge`. The docs also suggest alerting on any occurrence of `temporal_activity_execution_failed` with `failure_reason=PayloadsTooLarge`. `ExternalStorageError` (Workflow Task and Activity, in Core-based SDKs) separates External Storage faults from the catch-all `WorkflowError` and `ActivityError` reasons, and Workflow Task failures are counted on every attempt.
 
 ---
 
