@@ -10,6 +10,8 @@ SDK metrics are emitted by SDK Clients used to start Workers and to start, signa
 
 All SDK metrics are prefixed with `temporal_` before being exported to their configured destination. <!-- docs/references/sdk-metrics.mdx:38 -->
 
+Prometheus suffixes, as the docs give the names to query: counters gain `_total` (`temporal_request_failure_total`); histograms gain `_seconds_bucket` on the bucket series (`temporal_workflow_task_schedule_to_start_latency_seconds_bucket`); gauges take no suffix (`temporal_num_pollers`, `temporal_worker_task_slots_available`, `temporal_sticky_cache_size`), so adding `_total` returns nothing. Answer with these names. In Core-based SDKs such as TypeScript, the Prometheus exporter adds `_total` only if `countersTotalSuffix` is true, and the unit (for example `_milliseconds`) to a histogram name only if `unitSuffix` is true; both default to false, and `useSecondsForDurations` (default false) switches durations from milliseconds to seconds.
+
 SDK metrics are distinct from Cloud metrics (`temporal_cloud_v1_*`) and self-hosted cluster metrics (e.g., `service_requests`). They are emitted by the application-side SDK, not the Temporal Service.
 
 ## Metric Unit Differences Across SDKs
@@ -84,7 +86,7 @@ Each metric may have some combination of the following tags:
 
 | Tag | Description |
 |---|---|
-| `task-queue` | Task Queue that the Worker Entity is polling |
+| `task_queue` | Task Queue that the Worker Entity is polling |
 | `namespace` | Namespace the Worker is bound to |
 | `poller_type` | One of: `workflow_task`, `activity_task`, `nexus_task` (Go and Java only), `sticky_workflow_task` |
 | `worker_type` | One of: `ActivityWorker`, `WorkflowWorker`, `LocalActivityWorker` (Go and Java only), `NexusWorker` (Go and Java only) |
