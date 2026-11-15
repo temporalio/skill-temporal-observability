@@ -606,6 +606,8 @@ Operations throttled due to rate limits per second.
 ## Schedule Metrics
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:665 -->
 
+For Schedule throttling, prefer standard requests-per-second rate-limit monitoring.
+
 ### `temporal_cloud_v1_schedule_action_success_count`
 <!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:667-669 -->
 
@@ -627,13 +629,6 @@ Executions permanently dropped per second outside the Catchup Window. Not emitte
 
 **Type:** Rate
 
-### `temporal_cloud_v1_schedule_rate_limited_count`
-<!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:681-684 -->
-
-**Deprecated.** The rate of scheduled workflows delayed due to rate limiting; being replaced by standard request-per-second rate limit monitoring.
-
-**Type:** Rate
-
 ### `temporal_cloud_v1_schedule_overlap_skipped_count`
 
 Executions dropped per second by the overlap policy: `SKIP` when another execution is running or selected, `BUFFER_ONE` when its single buffered slot is occupied (also possible in backfills). Label: `schedule_overlap_policy`.
@@ -645,6 +640,19 @@ Executions dropped per second by the overlap policy: `SKIP` when another executi
 Percentile delay in seconds from an execution's scheduled time to actual start. Includes overlap-policy wait. Not emitted for backfills.
 
 **Type:** Latency
+
+### Older Patterns
+
+<details>
+<summary>Deprecated: temporal_cloud_v1_schedule_rate_limited_count</summary>
+
+<!-- docs/cloud/metrics/openmetrics/metrics-reference.mdx:681-684 -->
+
+The rate of scheduled workflows delayed due to rate limiting. This metric is being replaced by standard request-per-second rate-limit monitoring.
+
+**Type:** Rate
+
+</details>
 
 ---
 
