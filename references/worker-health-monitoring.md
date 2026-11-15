@@ -321,21 +321,10 @@ Available since Ruby SDK v1.1.0. Add configurations to `Runtime()` to adjust hea
 Heartbeats also report SDK runtime, hosting environment and OS/architecture, once per Worker.
 Opt out with:
 
-- Python: `Runtime(disable_environment_info=True)`.
+- Python (SDK 1.32.0+): `Runtime(disable_environment_info=True)`.
 - Ruby: `Runtime.new(disable_environment_info: true)`.
-- Go (Experimental): `client.Options.DisableWorkerEnvironmentInfo`.
+- Go (Experimental; SDK 1.49.0+): `client.Options.DisableWorkerEnvironmentInfo`.
 - Rust: `RuntimeOptions::disable_environment_info`.
 
 Workers send no heartbeat until the Worker starts running.
-Python heartbeats include the poller target and plugin `version()`.
-
-### Older Patterns
-
-<details>
-<summary>Python and Go SDK compatibility</summary>
-
-- Python's `disable_environment_info` opt-out is available from SDK 1.32.0.
-- Python SDK 1.36.0 added the poller target and plugin `version()` to heartbeats.
-- Go's Experimental `DisableWorkerEnvironmentInfo` opt-out is available from SDK 1.49.0.
-
-</details>
+Python heartbeats include the poller target and plugin `version()` (SDK 1.36.0+).
