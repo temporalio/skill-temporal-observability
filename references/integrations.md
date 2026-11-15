@@ -7,6 +7,7 @@ This reference covers third-party integrations for exporting metrics from the Te
 Prerequisite for every integration: a Service Account with the **Metrics Read-Only** role and an API key, created by an Account Owner or Global Admin (a Namespace Admin cannot grant it).
 
 Platform index: Datadog, Grafana Cloud, Elastic, New Relic, ClickStack, SigNoz, Parseable, Prometheus, OTel Collector.
+Spend/Action cost views: Datadog Cost Management (below) and the Grafana Action Costs dashboard and alerts (`service-health-monitoring.md` § Grafana Action Cost Dashboard and Alert Rules).
 
 ## Serverless Integrations
 
@@ -16,6 +17,8 @@ These integrations are fully managed by the third-party vendor. They handle scra
 <!-- docs/cloud/metrics/openmetrics/metrics-integrations.mdx:33-35 -->
 
 Datadog provides a serverless integration with the OpenMetrics endpoint. This integration scrapes metrics, stores them in Datadog, and provides a default dashboard with some built-in monitors. See the [Datadog integration page](https://docs.datadoghq.com/integrations/temporal-cloud-openmetrics/) for setup details.
+
+Datadog Cost Management is a separate integration from the one above: it sends Temporal Cloud billing data to Datadog Cloud Cost Management for spend attribution by namespace and service type. See the [Cost Management page](https://docs.datadoghq.com/integrations/temporal-cloud-costs/).
 
 ### Grafana Cloud
 <!-- docs/cloud/metrics/openmetrics/metrics-integrations.mdx:38-41 -->
