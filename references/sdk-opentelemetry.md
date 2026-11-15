@@ -82,22 +82,11 @@ For standalone Activities, register `OpenTracingActivityClientInterceptor` with 
 
 ### Metrics Export
 
-- `MetricsExporter` (Experimental) drains a `temporalio.runtime.MetricBuffer` into an OpenTelemetry `MeterProvider` every `poll_interval` (default 1 second).
+- `MetricsExporter` (Experimental; requires Python SDK 1.33.0+) drains a `temporalio.runtime.MetricBuffer` into an OpenTelemetry `MeterProvider` every `poll_interval` (default 1 second).
 - Wire the buffer into a `Runtime`, for example `Runtime(telemetry=TelemetryConfig(metrics=MetricBuffer(10_000)))` (10,000 is an example size). A full buffer drops updates, and the running exporter is what drains it.
 - Start it with `async with MetricsExporter(buffer, meter_provider):` or `run()` once the `Runtime` using the buffer exists; `shutdown()` stops it after a final drain. `run()` raises `RuntimeError` if the buffer was never attached to a `Runtime`.
 - `on_error` is called, in addition to logging, when draining or applying one update fails; if it raises, that is logged and ignored.
 - Counters are added, histograms recorded, and gauges exported as an observable gauge holding the latest value per attribute set.
-
-### Older Patterns
-
-<details>
-<summary>Python SDK compatibility</summary>
-
-- `MetricsExporter` was introduced in Python SDK 1.33.0.
-- Python SDK 1.35.0 removed `TemporalIdGenerator.seed_span_id` and `seed_trace_id`.
-- Python SDK 1.36.0 fixed missing spans for rejected updates and failed queries. Previously, a replay-safe span could remain unended when holding a non-failure exception.
-
-</details>
 
 ## TypeScript
 

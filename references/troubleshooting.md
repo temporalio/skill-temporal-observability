@@ -244,13 +244,4 @@ The warning is only emitted for `PollerBehavior::Autoscaling`.
 
 ### Python log forwarding and Runtime lifetime
 
-Clients and workers each hold a clone of the Runtime, so Core log forwarding (`forwarding` set) stops only when the last clone is dropped. Dropping one client or worker does not stop it.
-
-### Older Patterns
-
-<details>
-<summary>Python SDK 1.34.0 compatibility</summary>
-
-This log-forwarding lifetime behavior was introduced in Python SDK 1.35.0 and is absent in 1.34.0.
-
-</details>
+Clients and workers each hold a clone of the Runtime, so Core log forwarding (`forwarding` set) stops only when the last clone is dropped. Dropping one client or worker does not stop it. Requires Python SDK 1.35.0 or later.
