@@ -247,9 +247,17 @@ A Workflow Task Execution failed.
 - Available in: Core, Go, Java
 - Tags: `namespace`, `task_queue`, `workflow_type`, `failure_reason`
 
-Valid values for `failure_reason`: <!-- docs/references/sdk-metrics.mdx:513-516 -->
-- `NonDeterminismError`: The Workflow Task failed due to a non-determinism error.
+Valid values for `failure_reason`:
+- `NonDeterminismError`: The Workflow Task failed because of a non-determinism error.
+- `GrpcMessageTooLarge`: The Workflow Task response exceeded the gRPC message size limit and couldn't be delivered. The Temporal Service terminates the Workflow Execution in response.
+- `PayloadsTooLarge`: A Payload or Memo in the Workflow Task response exceeded the Namespace size limit, so the Worker failed the Workflow Task as retryable before sending it.
+- `RequestTooLarge`: The whole Workflow Task completion exceeded the Namespace limit on the size of a single request. The Worker failed the Workflow Task instead of sending it, and the Temporal Service retries it.
+- `ExternalStorageError`: The Workflow Task failed on an External Storage error, so storage faults are separate from other Worker failures. Core-based SDKs only count this from Core 0.11.0 (Python 1.36.0); before that these failures were counted as `WorkflowError`.
 - `WorkflowError`: The Workflow Task failed for any other reason.
+
+This counter is recorded for every failed Workflow Task attempt, including later attempts whose failure Core does not report to the server (Core 0.10.0; Ruby v1.10.0, Python 1.34.0, TypeScript v1.25.0). One stuck Workflow Task therefore increments it on each attempt, so it is not a count of distinct Workflow Executions.
+
+With `GrpcMessageTooLarge` the Temporal Service terminates the Workflow Execution; `PayloadsTooLarge` and `RequestTooLarge` fail the Workflow Task as retryable.
 
 #### `temporal_activity_execution_failed`
 <!-- docs/references/sdk-metrics.mdx:148-153 -->
@@ -258,7 +266,26 @@ An Activity Execution failed. Does not include local Activity Failures in Go and
 
 - Type: Counter
 - Available in: Core, Go, Java
-- Tags: `activity_type`, `namespace`, `task_queue`
+- Tags: `activity_type`, `namespace`, `task_queue`, `workflow_type`, `failure_reason`
+
+Valid values for `failure_reason`:
+- `PayloadsTooLarge`: A Payload in the Activity Task response exceeded the Namespace size limit, so the Worker failed the Activity Task as retryable before sending it.
+- `ExternalStorageError`: Core-based SDKs report this when the Activity Task failed on an External Storage error.
+- `ActivityError`: The Activity Task failed for any other reason.
+
+To track failures in Activity code and its dependencies, the docs suggest filtering on `failure_reason=ActivityError`, and alerting on any occurrence of `PayloadsTooLarge`.
+
+#### `temporal_local_activity_execution_failed`
+
+A Local Activity Execution failed.
+
+- Type: Counter
+- Available in: Core, Go, Java
+- Tags: `activity_type`, `namespace`, `task_queue`, `workflow_type`, `failure_reason`
+
+Valid values for `failure_reason`:
+- `timeout`: The Local Activity exceeded its Schedule-To-Close Timeout or Start-To-Close Timeout.
+- `ActivityError`: The Local Activity failed for any other reason.
 
 ## Complete Metric List
 
