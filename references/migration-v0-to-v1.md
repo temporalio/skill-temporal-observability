@@ -4,6 +4,10 @@
 
 This reference covers migrating from the deprecated PromQL endpoint (`temporal_cloud_v0_*` metrics) to the OpenMetrics endpoint (`temporal_cloud_v1_*` metrics): timeline, what is changing, notable differences, migration steps, complete v0-to-v1 metric mapping tables, handling sparse metrics, high-cardinality management, and FAQ.
 
+Query Cloud metrics in the monitoring platform that collects them: the OpenMetrics endpoint has no time-series query API and returns only the most recently completed aggregation window.
+
+To treat an absent series as zero, configure the query in the monitoring platform that collects the metrics. For PromQL, use `sum(temporal_cloud_v1_workflow_failed_count) or vector(0)`.
+
 ## Migration Timeline
 <!-- docs/cloud/metrics/openmetrics/migration-guide.mdx:71-79 -->
 
