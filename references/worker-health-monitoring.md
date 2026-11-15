@@ -294,7 +294,7 @@ w := worker.New(c, "my-task-queue", worker.Options{
 #### Python SDK
 <!-- docs/cloud/worker-health.mdx:420-424 -->
 
-Available since Python SDK v1.20.0. Use `TelemetryConfig()` to adjust heartbeat settings. <!-- docs/cloud/worker-health.mdx:422-424 -->
+Available since Python SDK v1.20.0. Set `worker_heartbeat_interval` (a `timedelta`, default 60 seconds, `None` disables) on `Runtime(...)`, not on `TelemetryConfig`.
 
 #### TypeScript SDK
 <!-- docs/cloud/worker-health.mdx:427-432 -->
@@ -314,4 +314,4 @@ Available since Java SDK v1.35.0. Set the heartbeat interval on `WorkflowClientO
 #### Ruby SDK
 <!-- docs/cloud/worker-health.mdx:451-455 -->
 
-Available since Ruby SDK v1.1.0. Add configurations to `Runtime()` to adjust heartbeat settings. <!-- docs/cloud/worker-health.mdx:453-455 -->
+Available since Ruby SDK v1.1.0. Set `worker_heartbeat_interval:` (seconds, default 60, `nil` disables) on `Temporalio::Runtime.new`.
