@@ -167,7 +167,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
 | Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
 | Go user choosing OpenTelemetry v1 vs v2 (`opentelemetry-v2` plugin), or `UseMonotonicCounters` | Consult `references/go-opentelemetry.md` |
-| Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
+| Needs to configure SDK metrics scrape endpoints or understand SDK metric units, or Python OpenTelemetry (`MetricsExporter`, `OpenTelemetryPlugin`, replay-safe providers) | Consult `references/sdk-metrics.md` |
 | Exporting SDK metrics/traces from serverless Workers (AWS Lambda, Google Cloud Run) over OTLP | Consult `references/serverless-otel.md` |
 | Setting up monitoring for a self-hosted Temporal Service, or server metrics/config changes (`tasks_dropped`, `tasks_expired`, `poller_scale_decision`, m3, `WithCustomMetricsHandler`) | Consult `references/self-hosted-monitoring.md` |
 | Needs to interpret provisioned capacity, throttle metrics, or BusyWorkflow lock contention | Consult `references/capacity-throttling.md` |
