@@ -33,13 +33,25 @@ scrape_configs:
 
 The SDK metrics ports (`8077`, `8078`) must be configured in application code via the preferred SDK. <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:61 -->
 
-## Server v1.32 Metric and Config Changes
+## Server Metrics and Configuration
 
-- `tasks_expired` (in v1.31.0) is gone from v1.32.0+.
+Check the deployed Server version before applying version-specific metric or configuration guidance.
+
+### Current Method
+
 - `tasks_dropped` counts backlog tasks dropped by matching, per Task Queue, with a `reason` tag: `not_found`, `internal_error`, `data_loss`, `expired_read`, `expired_memory`, `invalid`.
 - `poller_scale_decision` counter is opt-in: set dynamic config `matching.enablePollerScalingDecisionMetrics` to `true` (default `false`; scopable by Namespace and Task Queue). Tags: `decision` (`scale_up`, `scale_down`, `hold`) and `reason` (`idle`, `backlog`, `task_rate`, `rate_limited`).
 - The server `metrics` config supports only `statsd` and `prometheus`; there is no `m3` provider.
 - When embedding the server, pass a custom handler with `WithCustomMetricsHandler(metrics.Handler)`.
+
+### Older Patterns
+
+<details>
+<summary>Legacy tasks_expired metric (Server v1.31.0)</summary>
+
+`tasks_expired` was present in Server v1.31.0 and removed in v1.32.0. Use `tasks_dropped` instead.
+
+</details>
 
 ## Temporal Dev Server Metrics Port
 <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:76-79 -->
