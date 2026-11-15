@@ -335,7 +335,6 @@ Python heartbeats include the poller target and plugin `version()`.
 <summary>Python and Go SDK compatibility</summary>
 
 - Python's `disable_environment_info` opt-out is available from SDK 1.32.0.
-- Python SDK 1.35.0 fixed incorrectly reported slot and poller counts of `0` when using `MetricBuffer`.
 - Python SDK 1.36.0 added the poller target and plugin `version()` to heartbeats.
 - Go's Experimental `DisableWorkerEnvironmentInfo` opt-out is available from SDK 1.49.0.
 
