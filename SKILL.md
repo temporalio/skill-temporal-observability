@@ -63,7 +63,7 @@ Map the user's description to a category:
 | "workflows slow to start", "backlog growing", "schedule-to-start high", "tasks queuing up" | **Throughput/Backlog** |
 | "activities failing", "workflow failures spiking", "retries not working", "error rate high" | **Failure/Error** |
 | "workflows taking too long end-to-end", "execution slow", "replay latency" | **Latency** |
-| "resource exhausted errors", "throttling", "hitting limits" | **Resource Pressure** |
+| "resource exhausted errors", "throttling", "hitting limits", "provisioned capacity metrics" | **Resource Pressure** (read `references/capacity-throttling.md`) |
 | "can't connect", "auth error", "certificate expired" | **Not this skill** — hand off to `skill-temporal-cloud` |
 | "need to tune workers", "autoscaling", "slot sizing" | **Not this skill** — hand off to `skill-temporal-workertuning` |
 
@@ -109,7 +109,7 @@ Consult `references/ops-diagnostics-reference.md`:
 Cross-reference thresholds and detailed metric descriptions from:
 - `references/worker-health-monitoring.md` — backlog, sync match, poll success, task slots, sticky cache
 - `references/service-health-monitoring.md` — failure rates, error rates, limits, replication lag, detecting a failover or regional outage
-- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps
+- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps; worker log signals (`[TMPRL1104]`, Core log format, autoscaling poll-error warnings, Python log forwarding lifetime)
 
 ### Step D5: Explain Then Prescribe
 
@@ -166,8 +166,11 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Wants to know which Cloud metrics exist, their types, or labels | Consult `references/cloud-metrics-catalog.md` for the complete `temporal_cloud_v1_*` catalog |
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
 | Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
+| Go user choosing OpenTelemetry v1 vs v2 (`opentelemetry-v2` plugin), or `UseMonotonicCounters` | Consult `references/go-opentelemetry.md` |
 | Needs to configure SDK metrics scrape endpoints or understand SDK metric units, or Python OpenTelemetry (`MetricsExporter`, `OpenTelemetryPlugin`, replay-safe providers) | Consult `references/sdk-metrics.md` |
-| Setting up monitoring for a self-hosted Temporal Service | Consult `references/self-hosted-monitoring.md` |
+| Exporting SDK metrics/traces from serverless Workers (AWS Lambda, Google Cloud Run) over OTLP | Consult `references/serverless-otel.md` |
+| Setting up monitoring for a self-hosted Temporal Service, or server metrics/config changes (`tasks_dropped`, `tasks_expired`, `poller_scale_decision`, m3, `WithCustomMetricsHandler`) | Consult `references/self-hosted-monitoring.md` |
+| Needs to interpret provisioned capacity, throttle metrics, or BusyWorkflow lock contention | Consult `references/capacity-throttling.md` |
 | Wants to monitor Temporal Cloud service health (latency, error rates, failures, limits) | Consult `references/service-health-monitoring.md` |
 | Needs to monitor Worker fleet health (backlog, greedy workers, misconfigured workers, sticky cache) | Consult `references/worker-health-monitoring.md` |
 | Migrating from PromQL/v0 to OpenMetrics/v1 | Consult `references/migration-v0-to-v1.md` |
@@ -201,3 +204,4 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 - OpenMetrics endpoint: API key (Bearer token) with a service account having "Metrics Read-Only" Account Level Role.
 - PromQL endpoint (deprecated): mTLS certificates with customer-specific endpoints (`<account-id>.tmprl.cloud/prometheus`).
 - Never mix these authentication methods or endpoint URLs.
+
