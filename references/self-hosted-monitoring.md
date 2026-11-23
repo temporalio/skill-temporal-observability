@@ -61,24 +61,8 @@ docker run -p 9090:9090 -v /path/to/prometheus.yml /etc/prometheus/prometheus.ym
 ```
 
 ## SDK Metrics Setup for Self-Hosted
-<!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:91-113 -->
 
-SDK metrics are emitted by Temporal Workers and other Clients, and must be configured in application code. Per-SDK guides:
-
-- [Go](/develop/go/platform/observability#metrics) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:96 -->
-- [Java](/develop/java/platform/observability#metrics) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:97 -->
-- [PHP](/develop/php/platform/observability) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:98 -->
-- [Python](/develop/python/platform/observability#metrics) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:99 -->
-- [TypeScript](/develop/typescript/platform/observability#metrics) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:100 -->
-- [.NET](/develop/dotnet/platform/observability#metrics) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:101 -->
-- [Ruby](/develop/ruby/platform/observability#metrics) <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:102 -->
-
-Working samples: <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:106-110 -->
-- [Go SDK Sample](https://github.com/temporalio/samples-go/tree/main/metrics)
-- [Java SDK Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/metrics)
-- [Python SDK Sample](https://github.com/temporalio/samples-python/tree/main/prometheus)
-- [TypeScript SDK Sample](https://github.com/temporalio/samples-typescript/tree/main/interceptors-opentelemetry)
-- [.NET SDK Sample](https://github.com/temporalio/samples-dotnet/tree/main/src/OpenTelemetry)
+SDK metrics are emitted by Temporal Workers and other Clients, and must be enabled in application code; use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer). Then add each Worker's metrics endpoint to the Prometheus scrape config above.
 
 ### Verifying Prometheus Configuration
 <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:116-118 -->
