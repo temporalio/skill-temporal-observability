@@ -26,7 +26,7 @@ The Core SDK is a shared common core library used by TypeScript, Python, and .NE
 
 ## Emitting SDK Metrics
 
-SDK metrics are emitted only after the Worker or Client process enables an exporter (a Prometheus scrape endpoint, OTLP, or a custom exporter). Setting that up is Worker code; use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer). This reference starts once the endpoint exists.
+A Worker or Client emits SDK metrics only after its process enables an exporter, such as a Prometheus endpoint or OTLP. To enable one, use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
 
 ## Prometheus Configuration for SDK Scrape
 <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:68-91 -->

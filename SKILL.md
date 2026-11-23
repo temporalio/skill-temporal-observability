@@ -14,21 +14,21 @@ This skill helps users set up metrics collection, write monitoring queries, conf
 - **Query** — writing PromQL/DQL queries for dashboards and alerts.
 - **Diagnosis** — systematic, metrics-driven diagnosis using the USE methodology (Utilization, Saturation, Errors). Follow the Diagnosis Protocol below.
 
-You produce configs, queries, and code snippets. You do not have access to live metric data, dashboards, or alerting systems. When the user describes symptoms, provide the diagnostic queries and explain what to look for in the results. This skill owns everything after telemetry leaves a Worker or Client process: collection, queries, dashboards, alerts, and diagnosis. It does not own the code that emits telemetry; see Observability ownership below. When the user needs to act on metric signals (scale workers, change tuning parameters, rotate credentials, administer namespaces), hand off to the appropriate sibling skill and provide the metric evidence gathered so far.
+You produce configs, queries, and code snippets. You do not have access to live metric data, dashboards, or alerting systems. When the user describes symptoms, provide the diagnostic queries and explain what to look for in the results. This skill owns Temporal telemetry after it leaves a Worker or Client process. [Observability ownership](#observability-ownership) routes the rest. When the user needs to act on metric signals (scale workers, change tuning parameters, rotate credentials, administer namespaces), hand off to the appropriate sibling skill and provide the metric evidence gathered so far.
 
 ### Observability ownership
 
-Three skills split Temporal observability. Each row has one owner.
+Route each observability task to the skill that owns it:
 
-| Observability concern | Skill |
-|---|---|
-| Code and configuration inside a Worker or Client process, except the serverless helpers in the last row: SDK metrics export (Prometheus, OTLP, buffered), custom metrics, OpenTelemetry and OpenTracing plugins and interceptors, replay-safe loggers, meters and tracers, Runtime telemetry and logging, and Worker heartbeat settings | [temporal-developer](https://github.com/temporalio/skill-temporal-developer) |
-| Everything after telemetry leaves the process: the Temporal Cloud OpenMetrics endpoint and `temporal_cloud_v1_*` metrics, self-hosted Temporal Service metrics, scraping SDK metrics, what each `temporal_*` SDK metric means and its units, PromQL, DQL and NRQL queries, dashboards, alerts, platform integrations (Datadog, Grafana, New Relic, ClickStack, OpenTelemetry Collector), and metric-driven diagnosis | [temporal-observability](https://github.com/temporalio/skill-temporal-observability) |
-| OpenTelemetry on serverless Workers: AWS Lambda ADOT helpers, the Cloud Run OpenTelemetry plugin and Collector sidecar, and flushing telemetry before shutdown | [temporal-serverless](https://github.com/temporalio/skill-temporal-serverless) |
+| The task involves | Examples | Skill |
+| --- | --- | --- |
+| Emitting or configuring telemetry from a Worker or Client process | SDK metrics exporters, custom metrics, tracing plugins, replay-safe logging, Worker heartbeat settings | [temporal-developer](https://github.com/temporalio/skill-temporal-developer) |
+| OpenTelemetry for Workers on AWS Lambda or Google Cloud Run | ADOT layer setup, the Cloud Run OpenTelemetry plugin, the Collector sidecar, flushing before shutdown | [temporal-serverless](https://github.com/temporalio/skill-temporal-serverless) |
+| Telemetry after it leaves the process | The Cloud metrics endpoint, self-hosted Temporal Service metrics, SDK metric meanings and units, queries, dashboards, alerts, metric-driven diagnosis | [temporal-observability](https://github.com/temporalio/skill-temporal-observability) |
 
-A new or renamed SDK metric belongs to temporal-observability. A new API or option that emits, exports or configures telemetry belongs to temporal-developer.
-
-Changes limited to a row owned by temporal-developer or temporal-serverless are out of scope for this skill: for example a new SDK exporter, custom-metric API, tracing plugin, logging option, or Worker heartbeat setting, or the Lambda and Cloud Run OpenTelemetry helpers.
+- A new or renamed SDK metric belongs to temporal-observability.
+- A new API or option that emits, exports, or configures telemetry belongs to temporal-developer.
+- This skill does not cover changes limited to an SDK exporter, custom-metric API, tracing plugin, logging option, or Worker heartbeat setting, or to the Lambda and Cloud Run OpenTelemetry helpers.
 
 ## How to Use This Skill
 
@@ -181,8 +181,6 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
 | Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
 | Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
-| Needs to emit or export SDK metrics, add custom metrics, set up OpenTelemetry or OpenTracing plugins and interceptors, replay-safe logging, or Worker heartbeat settings | Defer to `skill-temporal-developer` |
-| Exporting SDK metrics/traces from serverless Workers (AWS Lambda, Google Cloud Run) over OTLP | Defer to `skill-temporal-serverless` |
 | Setting up monitoring for a self-hosted Temporal Service, or server metrics/config changes (`tasks_dropped`, `tasks_expired`, `poller_scale_decision`, m3, `WithCustomMetricsHandler`) | Consult `references/self-hosted-monitoring.md` |
 | Needs to interpret provisioned capacity, throttle metrics, or BusyWorkflow lock contention | Consult `references/capacity-throttling.md` |
 | Wants to monitor Temporal Cloud service health (latency, error rates, failures, limits) | Consult `references/service-health-monitoring.md` |

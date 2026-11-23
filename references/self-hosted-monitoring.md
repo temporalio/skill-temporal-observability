@@ -62,7 +62,9 @@ docker run -p 9090:9090 -v /path/to/prometheus.yml /etc/prometheus/prometheus.ym
 
 ## SDK Metrics Setup for Self-Hosted
 
-SDK metrics are emitted by Temporal Workers and other Clients, and must be enabled in application code; use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer). Then add each Worker's metrics endpoint to the Prometheus scrape config above.
+Workers and Clients emit SDK metrics only after application code enables an exporter. To enable one, use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
+
+Add each Worker's metrics endpoint to the Prometheus scrape config above.
 
 ### Verifying Prometheus Configuration
 <!-- docs/production-deployment/self-hosted-guide/monitoring.mdx:116-118 -->

@@ -271,4 +271,4 @@ Uses include: <!-- docs/cloud/worker-health.mdx:386-387 -->
 
 ### Heartbeat Configuration
 
-The allowed heartbeat interval range is 1s to 60s. Disabling the Worker heartbeat will cause features that provide the list of active Workers and information about those Workers to show missing or inaccurate information. Each SDK sets the interval, host resource reporting, and environment-info opt-out in Worker or Client code; use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
+The allowed heartbeat interval range is 1s to 60s. Disabling the Worker heartbeat will cause features that provide the list of active Workers and information about those Workers to show missing or inaccurate information. To change the interval, report host resources, or omit environment info, use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
