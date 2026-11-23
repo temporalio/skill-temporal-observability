@@ -271,4 +271,7 @@ Uses include: <!-- docs/cloud/worker-health.mdx:386-387 -->
 
 ### Heartbeat Configuration
 
-The allowed heartbeat interval range is 1s to 60s. Disabling the Worker heartbeat will cause features that provide the list of active Workers and information about those Workers to show missing or inaccurate information. To change the interval, report host resources, or omit environment info, use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
+The allowed heartbeat interval range is 1s to 60s. Disabling the Worker heartbeat will cause features that provide the list of active Workers and information about those Workers to show missing or inaccurate information. - A Worker sends no heartbeat until it starts running, so a Worker that is still starting is missing from `temporal worker list`.
+- Python Workers report each poller target and each plugin's `version()` in their heartbeats.
+
+To change the interval, report host resources, or omit environment info, use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
