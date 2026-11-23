@@ -18,17 +18,13 @@ You produce configs, queries, and code snippets. You do not have access to live 
 
 ### Observability ownership
 
-Route each observability task to the skill that owns it:
+| Task | Skill |
+| --- | --- |
+| Emit or configure telemetry in Worker or Client code: SDK metrics exporters, custom metrics, tracing plugins, logging, Worker heartbeats | [temporal-developer](https://github.com/temporalio/skill-temporal-developer) |
+| OpenTelemetry for Workers on AWS Lambda or Google Cloud Run | [temporal-serverless](https://github.com/temporalio/skill-temporal-serverless) |
+| Collect, query, dashboard, alert on, or diagnose from telemetry: Cloud metrics endpoint, self-hosted Temporal Service metrics, SDK metric meanings | [temporal-observability](https://github.com/temporalio/skill-temporal-observability) |
 
-| The task involves | Examples | Skill |
-| --- | --- | --- |
-| Emitting or configuring telemetry from a Worker or Client process | SDK metrics exporters, custom metrics, tracing plugins, replay-safe logging, Worker heartbeat settings | [temporal-developer](https://github.com/temporalio/skill-temporal-developer) |
-| OpenTelemetry for Workers on AWS Lambda or Google Cloud Run | ADOT layer setup, the Cloud Run OpenTelemetry plugin, the Collector sidecar, flushing before shutdown | [temporal-serverless](https://github.com/temporalio/skill-temporal-serverless) |
-| Telemetry after it leaves the process | The Cloud metrics endpoint, self-hosted Temporal Service metrics, SDK metric meanings and units, queries, dashboards, alerts, metric-driven diagnosis | [temporal-observability](https://github.com/temporalio/skill-temporal-observability) |
-
-- A new or renamed SDK metric belongs to temporal-observability.
-- A new API or option that emits, exports, or configures telemetry belongs to temporal-developer.
-- This skill does not cover changes limited to an SDK exporter, custom-metric API, tracing plugin, logging option, or Worker heartbeat setting, or to the Lambda and Cloud Run OpenTelemetry helpers.
+A new or renamed SDK metric belongs to temporal-observability.
 
 ## How to Use This Skill
 
@@ -190,6 +186,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Describing a symptom that needs systematic diagnosis (slow workflows, backlog, failures, latency) | Follow the **Diagnosis Protocol** above. Consult `references/ops-diagnostics-reference.md` for USE framework and decision trees |
 | Wants a worked example of a diagnostic workflow | Consult `references/diagnosis-examples.md` |
 | Wants to write Workflow/Activity/Worker SDK code (not metrics config) | Defer to `skill-temporal-developer` |
+| Wants to emit or configure telemetry in Worker or Client code, or set up OpenTelemetry on serverless Workers | See [Observability ownership](#observability-ownership) |
 | Wants to tune Worker performance (slot suppliers, tuners, cache sizing) | Defer to `skill-temporal-workertuning` -- this skill owns collection/query layer only |
 | Wants to administer or diagnose Temporal Cloud/self-hosted environments | Defer to `skill-temporal-ops` -- this skill provides metric queries for diagnosis |
 | Wants Cloud connectivity, auth, or namespace config (not metrics) | Defer to `skill-temporal-cloud` |
