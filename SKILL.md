@@ -1,6 +1,6 @@
 ---
 name: temporal-observability
-description: 'Instrument, collect, query, and alert on Temporal metrics across Temporal Cloud and self-hosted deployments. Covers Cloud OpenMetrics endpoint, SDK metrics and distributed tracing, third-party integrations (Datadog, Grafana, New Relic, Prometheus, OTel Collector, ClickStack), worker fleet health, and PromQL v0-to-v1 migration. Use when the user mentions: "Temporal metrics", "Temporal monitoring", "Temporal observability", "Temporal alerting", "Datadog Temporal", "Grafana Temporal", "Cloud metrics endpoint", "metrics.temporal.io", "SDK metrics", "Temporal tracing", "OpenTelemetry", "worker backlog", "scrape Temporal metrics", "OpenMetrics", "PromQL migration". Not for writing Workflows/Activities (temporal-developer), Worker tuning (temporal-workertuning), or Cloud admin (temporal-cloud/temporal-ops).'
+description: 'Collect, query, dashboard, and alert on Temporal metrics across Temporal Cloud and self-hosted deployments, and diagnose problems from them. Covers the Cloud OpenMetrics endpoint, self-hosted Temporal Service metrics, scraping and querying SDK metrics, third-party integrations (Datadog, Grafana, New Relic, Prometheus, OTel Collector, ClickStack), worker fleet health, and PromQL v0-to-v1 migration. Use when the user mentions: "Temporal metrics", "Temporal monitoring", "Temporal observability", "Temporal alerting", "Datadog Temporal", "Grafana Temporal", "Cloud metrics endpoint", "metrics.temporal.io", "SDK metrics", "OTel Collector", "worker backlog", "scrape Temporal metrics", "OpenMetrics", "PromQL migration". Not for SDK code or SDK changes other than new or renamed metrics (temporal-developer), serverless Worker OpenTelemetry (temporal-serverless), Worker tuning (temporal-workertuning), or Cloud admin (temporal-cloud/temporal-ops).'
 version: 0.1.0
 ---
 
@@ -8,13 +8,24 @@ version: 0.1.0
 
 ## Overview
 
-This skill helps users set up metrics collection and SDK tracing, write monitoring queries, configure alerts, and diagnose performance issues using Temporal metrics. It operates in three modes:
+Work in one of three modes:
 
-- **Setup** — generating scrape configs, integration configs, and SDK metrics endpoint code. Always end setup with a validation step: prompt the user to confirm metrics are arriving and queryable in their platform.
+- **Setup** — generating scrape configs and integration configs. Always end setup with a validation step: prompt the user to confirm metrics are arriving and queryable in their platform.
 - **Query** — writing PromQL/DQL queries for dashboards and alerts.
 - **Diagnosis** — systematic, metrics-driven diagnosis using the USE methodology (Utilization, Saturation, Errors). Follow the Diagnosis Protocol below.
 
-You produce configs, queries, and code snippets. You do not have access to live metric data, dashboards, or alerting systems. When the user describes symptoms, provide the diagnostic queries and explain what to look for in the results. This skill owns SDK instrumentation and the metrics collection and query layer. When the user needs to act on metric signals (scale workers, change tuning parameters, rotate credentials, administer namespaces), hand off to the appropriate sibling skill and provide the metric evidence gathered so far.
+You produce configs, queries, and code snippets. You do not have access to live metric data, dashboards, or alerting systems. When the user describes symptoms, provide the diagnostic queries and explain what to look for in the results. This skill owns Temporal telemetry after it leaves a Worker or Client process. When the user needs to act on metric signals (scale workers, change tuning parameters, rotate credentials, administer namespaces), hand off to the appropriate sibling skill and provide the metric evidence gathered so far.
+
+### Observability scope
+
+This skill covers Temporal telemetry after it leaves a Worker or Client: the Temporal Cloud metrics endpoint, self-hosted Temporal Service metrics, scraping SDK metrics, what each SDK metric means, queries, dashboards, alerts, and metric-driven diagnosis.
+
+This skill starts at the metrics endpoint a Worker already exposes; changing how a Worker exports telemetry is not one of its tasks. In the Temporal SDK repositories, this skill covers only changes that add, rename, or remove an SDK metric. In the documentation, it covers `docs/cloud/metrics/`, `docs/production-deployment/cloud/metrics/`, `docs/references/sdk-metrics.mdx`, and `docs/production-deployment/self-hosted-guide/monitoring.mdx`.
+
+Not covered here:
+
+- Any other SDK change, including exporters and their naming options such as suffixes or histogram aggregation, custom-metric APIs, tracing plugins such as `contrib/opentelemetry`, logging options, and Worker heartbeat contents or settings: use [temporal-developer](https://github.com/temporalio/skill-temporal-developer).
+- The serverless Worker packages `temporalio.contrib.aws.lambda_worker`, `temporalio.contrib.gcp.cloud_run`, `go.temporal.io/sdk/contrib/aws/lambdaworker`, and `go.temporal.io/sdk/contrib/gcp/cloudrun`, including their OpenTelemetry helpers: use [temporal-serverless](https://github.com/temporalio/skill-temporal-serverless).
 
 ## How to Use This Skill
 
@@ -36,7 +47,7 @@ Cloud, self-hosted, or dev server. This affects scrape configs, auth mechanisms,
 
 Prometheus, Datadog, Grafana Cloud, New Relic, ClickStack, or OTel Collector. This affects config format, query language, and available features.
 
-### Step 4: For SDK instrumentation, determine the SDK language
+### Step 4: For SDK metric queries, determine the SDK language
 
 Histogram units differ: milliseconds for Core-based SDKs (TypeScript, Python, .NET) vs seconds for Go and Java. Getting this wrong produces thresholds that are off by 1000x.
 
@@ -109,7 +120,7 @@ Consult `references/ops-diagnostics-reference.md`:
 Cross-reference thresholds and detailed metric descriptions from:
 - `references/worker-health-monitoring.md` — backlog, sync match, poll success, task slots, sticky cache
 - `references/service-health-monitoring.md` — failure rates, error rates, limits, replication lag, detecting a failover or regional outage
-- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps; worker log signals (`[TMPRL1104]`, Core log format, autoscaling poll-error warnings, Python log forwarding lifetime)
+- `references/troubleshooting.md` — per-bottleneck root causes and diagnostic steps; worker log signals (`[TMPRL1104]`, autoscaling poll-error warnings)
 
 ### Step D5: Explain Then Prescribe
 
@@ -166,9 +177,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Wants to know which Cloud metrics exist, their types, or labels (including Nexus, Schedule, backlog age, billable actions) | Consult `references/cloud-metrics-catalog.md` for the complete `temporal_cloud_v1_*` catalog |
 | Needs to set up or configure the OpenMetrics endpoint (auth, scrape config, rate limits) | Consult `references/openmetrics-endpoint.md` |
 | Wants to integrate metrics with Datadog, Grafana Cloud, Elastic, SigNoz, Parseable, ClickStack, New Relic, Prometheus, or OTel Collector | Consult `references/integrations.md` |
-| Needs to configure SDK metrics scrape endpoints or understand SDK metric units | Consult `references/sdk-metrics.md` |
-| Needs SDK OpenTelemetry metrics export, tracing interceptors/plugins, or replay-safe instrumentation | Consult `references/sdk-opentelemetry.md` and choose the SDK section |
-| Exporting SDK metrics/traces from serverless Workers (AWS Lambda, Google Cloud Run) over OTLP | Consult `references/serverless-otel.md` |
+| Needs to scrape SDK metrics endpoints with Prometheus or Grafana, or understand SDK metric units | Consult `references/sdk-metrics.md` |
 | Setting up monitoring for a self-hosted Temporal Service, or server metrics/config changes (`tasks_dropped`, `tasks_expired`, `poller_scale_decision`, m3, `WithCustomMetricsHandler`) | Consult `references/self-hosted-monitoring.md` |
 | Needs to interpret provisioned capacity, throttle metrics, or BusyWorkflow lock contention | Consult `references/capacity-throttling.md` |
 | Wants to monitor Temporal Cloud service health (latency, error rates, failures, limits) | Consult `references/service-health-monitoring.md` |
@@ -177,7 +186,8 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 | Troubleshooting performance bottlenecks using metrics | Consult `references/troubleshooting.md` |
 | Describing a symptom that needs systematic diagnosis (slow workflows, backlog, failures, latency) | Follow the **Diagnosis Protocol** above. Consult `references/ops-diagnostics-reference.md` for USE framework and decision trees |
 | Wants a worked example of a diagnostic workflow | Consult `references/diagnosis-examples.md` |
-| Wants to write Workflow/Activity/Worker SDK code (not metrics config) | Defer to `skill-temporal-developer` |
+| Wants to write Worker or Client code, including enabling SDK metrics export, tracing, or logging | Defer to `skill-temporal-developer` |
+| Wants to emit or configure telemetry in Worker or Client code, or set up OpenTelemetry on serverless Workers | See [Observability scope](#observability-scope) |
 | Wants to tune Worker performance (slot suppliers, tuners, cache sizing) | Defer to `skill-temporal-workertuning` -- this skill owns collection/query layer only |
 | Wants to administer or diagnose Temporal Cloud/self-hosted environments | Defer to `skill-temporal-ops` -- this skill provides metric queries for diagnosis |
 | Wants Cloud connectivity, auth, or namespace config (not metrics) | Defer to `skill-temporal-cloud` |
@@ -193,7 +203,7 @@ For fully worked examples of this protocol in action, see `references/diagnosis-
 - v0 and v1 names differ beyond the version prefix (e.g., `temporal_cloud_v0_frontend_service_request_count` → `temporal_cloud_v1_service_request_count` — note the dropped `frontend_`). When helping users migrate, consult the mapping table in `references/migration-v0-to-v1.md`; do not attempt to guess v1 names by swapping the version prefix.
 
 ### Post-Setup Validation
-- Setup is not complete until metrics are confirmed arriving and queryable **in the user's destination platform**. Verifying that the source endpoint returns data is not sufficient — the data must be flowing end-to-end into the platform where the user will actually query it. After providing any scrape config, integration config, or SDK metrics setup, always end with a validation step.
+- Setup is not complete until metrics are confirmed arriving and queryable **in the user's destination platform**. Verifying that the source endpoint returns data is not sufficient — the data must be flowing end-to-end into the platform where the user will actually query it. After providing any scrape or integration config, always end with a validation step.
 - **Validate at the destination, not the source.** Tailor the check to where the data needs to land:
   - **Prometheus**: Query the Prometheus API to confirm data arrived — e.g., `curl -s "http://localhost:9090/api/v1/query?query=temporal_cloud_v1_service_request_count"` should return results with recent timestamps.
   - **Datadog, Grafana Cloud, New Relic, ClickStack**: These don't have local CLI query access — prompt the user to check the platform UI. Tell them exactly what to search for (e.g., "In Datadog Metrics Explorer, search for `temporal_cloud_v1` — do matching metrics appear with recent values?").

@@ -228,20 +228,9 @@ A "forced eviction" means a Workflow Execution was removed from the cache before
 Workers log a `[TMPRL1104]` warning when a Workflow Task takes longer than a threshold, 5 seconds by default.
 `TEMPORAL_WORKFLOW_TASK_DURATION_WARN_SECONDS` overrides the default; an unparsable value falls back to 5 (Go, Rust).
 
-### Core console log format
-
-Core console logs are `compact` (default), `pretty` or `json`:
-
-- Python: `LoggingConfig(format=LoggingFormat.JSON)`, ignored when `forwarding` is set.
-- Ruby: `LoggingOptions.new(log_format: ConsoleLogFormat::JSON)`.
-- TypeScript: `logging: { console: { format: 'json' } }`.
-
 ### Persistent poll error warning (autoscaling pollers)
 
 Workers using autoscaling pollers log `Task polling has encountered errors continuously; the worker will continue retrying` once poll errors have lasted 60 seconds.
 Repeat warnings back off exponentially (factor 2) up to a 15 minute cap, and a successful poll resets the timer.
 The warning is only emitted for `PollerBehavior::Autoscaling`.
 
-### Python log forwarding and Runtime lifetime
-
-Clients and workers each hold a clone of the Runtime, so Core log forwarding (`forwarding` set) stops only when the last clone is dropped. Dropping one client or worker does not stop it. Requires Python SDK 1.35.0 or later.

@@ -1,6 +1,6 @@
 # Temporal Observability Skill
 
-A skill for coding agents to use when instrumenting, collecting, querying, and alerting on [Temporal](https://temporal.io/) metrics across Temporal Cloud and self-hosted deployments.
+A skill for coding agents to use when collecting, querying, dashboarding, and alerting on [Temporal](https://temporal.io/) metrics across Temporal Cloud and self-hosted deployments.
 
 > [!WARNING]
 > This Skill is currently in Public Preview, and will continue to evolve and improve.

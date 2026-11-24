@@ -2,7 +2,7 @@
 
 <!-- Sources: docs/references/sdk-metrics.mdx, docs/cloud/metrics/sdk-metrics-setup.mdx -->
 
-This reference covers SDK metrics: how they differ from Cloud metrics, how to expose a scrape endpoint per SDK, Prometheus configuration for SDK scrape, Grafana data source setup, the key SDK metrics for observability, and metric unit differences across SDKs.
+This reference covers SDK metrics: how they differ from Cloud metrics, Prometheus configuration for SDK scrape, Grafana data source setup, the key SDK metrics for observability, and metric unit differences across SDKs.
 
 ## SDK Metrics vs Cloud Metrics
 
@@ -10,7 +10,7 @@ SDK metrics are emitted by SDK Clients used to start Workers and to start, signa
 
 All SDK metrics are prefixed with `temporal_` before being exported to their configured destination. <!-- docs/references/sdk-metrics.mdx:38 -->
 
-Prometheus suffixes, as the docs give the names to query: counters gain `_total` (`temporal_request_failure_total`); histograms gain `_seconds_bucket` on the bucket series (`temporal_workflow_task_schedule_to_start_latency_seconds_bucket`); gauges take no suffix (`temporal_num_pollers`, `temporal_worker_task_slots_available`, `temporal_sticky_cache_size`), so adding `_total` returns nothing. Use these names unless an exporter's options change them. In Core-based SDKs such as TypeScript, the Prometheus exporter adds `_total` only if `countersTotalSuffix` is true, and the unit (for example `_milliseconds`) to a histogram name only if `unitSuffix` is true; both default to false, and `useSecondsForDurations` (default false) switches durations from milliseconds to seconds.
+Prometheus suffixes, as the docs give the names to query: counters gain `_total` (`temporal_request_failure_total`); histograms gain `_seconds_bucket` on the bucket series (`temporal_workflow_task_schedule_to_start_latency_seconds_bucket`); gauges take no suffix (`temporal_num_pollers`, `temporal_worker_task_slots_available`, `temporal_sticky_cache_size`), so adding `_total` returns nothing. Use these names unless an exporter's options change them; in Core-based SDKs such as TypeScript, the Prometheus exporter adds `_total` and unit suffixes only when the Worker enables them. Exporter options are covered by the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
 
 SDK metrics are distinct from Cloud metrics (`temporal_cloud_v1_*`) and self-hosted cluster metrics (e.g., `service_requests`). They are emitted by the application-side SDK, not the Temporal Service.
 
@@ -24,34 +24,9 @@ The unit of measurement for Histogram metrics varies by SDK:
 
 The Core SDK is a shared common core library used by TypeScript, Python, and .NET SDKs. <!-- docs/references/sdk-metrics.mdx:61 -->
 
-## OTLP Exponential Histograms (.NET)
+## Emitting SDK Metrics
 
-Set `OpenTelemetryOptions.HistogramAggregation` to `new OpenTelemetryHistogramAggregation.Base2Exponential()` to export every histogram, including custom ones, as a base-2 exponential histogram (a Prometheus native histogram); the default is `ExplicitBuckets`.
-It cannot be combined with `HistogramBucketOverrides`.
-`NameSuffix` defaults to `_native` and is appended to every histogram name; `MaxSize` defaults to 160 and `MaxScale` to 20 (range -10 to 20).
-
-## Exposing a Metrics Endpoint
-<!-- docs/cloud/metrics/sdk-metrics-setup.mdx:46-66 -->
-
-Each language SDK has its own way of configuring a Prometheus scrape endpoint. See the per-SDK guides:
-
-- [Go SDK](/develop/go/platform/observability#metrics) <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:51 -->
-- [Java SDK](/develop/java/platform/observability#metrics) <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:52 -->
-- [TypeScript SDK](/develop/typescript/platform/observability#metrics) <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:53 -->
-- [Python SDK](/develop/python/platform/observability#metrics) <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:54 -->
-- [.NET SDK](/develop/dotnet/platform/observability#metrics) <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:55 -->
-
-Working samples: <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:59-63 -->
-
-- [Go SDK Samples](https://github.com/temporalio/samples-go/tree/main/metrics)
-- [Java SDK Samples](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/metrics)
-- [TypeScript SDK Samples](https://github.com/temporalio/samples-typescript/tree/main/interceptors-opentelemetry)
-- [Python SDK Samples](https://github.com/temporalio/samples-python/tree/main/custom_metric)
-- [.NET SDK Samples](https://github.com/temporalio/samples-dotnet/tree/main/src/OpenTelemetry/DotNetMetrics)
-
-Some SDKs use OpenTelemetry to instrument metrics. A Prometheus exporter with OpenTelemetry can be used to expose metrics for scraping. <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:65-66 -->
-
-For OpenTelemetry exporters, plugins and replay-safe providers, read [SDK OpenTelemetry and tracing](sdk-opentelemetry.md).
+A Worker or Client emits SDK metrics only after its process enables an exporter, such as a Prometheus endpoint or OTLP. To enable one, use the [temporal-developer skill](https://github.com/temporalio/skill-temporal-developer).
 
 ## Prometheus Configuration for SDK Scrape
 <!-- docs/cloud/metrics/sdk-metrics-setup.mdx:68-91 -->
