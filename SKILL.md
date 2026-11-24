@@ -1,7 +1,6 @@
 ---
 name: temporal-observability
 description: 'Collect, query, dashboard, and alert on Temporal metrics across Temporal Cloud and self-hosted deployments, and diagnose problems from them. Covers the Cloud OpenMetrics endpoint, self-hosted Temporal Service metrics, scraping and querying SDK metrics, third-party integrations (Datadog, Grafana, New Relic, Prometheus, OTel Collector, ClickStack), worker fleet health, and PromQL v0-to-v1 migration. Use when the user mentions: "Temporal metrics", "Temporal monitoring", "Temporal observability", "Temporal alerting", "Datadog Temporal", "Grafana Temporal", "Cloud metrics endpoint", "metrics.temporal.io", "SDK metrics", "OTel Collector", "worker backlog", "scrape Temporal metrics", "OpenMetrics", "PromQL migration". Not for SDK code or SDK changes other than new or renamed metrics (temporal-developer), serverless Worker OpenTelemetry (temporal-serverless), Worker tuning (temporal-workertuning), or Cloud admin (temporal-cloud/temporal-ops).'
-version: 0.1.0
 ---
 
 # Skill: temporal-observability
